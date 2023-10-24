@@ -1,0 +1,7 @@
+set(PROJECT_NAME ${CMAKE_PROJECT_NAME})
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-g -O2")
+include_directories(${PROJECT_SOURCE_DIR}/include)
+link_directories(${PROJECT_SOURCE_DIR}/src)
+add_executable(C1T1 Interger1/1.cpp)
+target_link_libraries(C1T1 int2048)
