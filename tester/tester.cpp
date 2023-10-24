@@ -65,13 +65,13 @@ int main(int argc, char *argv[]) {
   }
   for (int i = 0; i < listed_cases.size(); i++) {
     std::cerr << "Testing " << listed_cases[i] << std::endl;
-    std::cerr << "Command " << index[listed_cases[i]] << std::endl;
+    std::cerr << "Command = " << index[listed_cases[i]] << std::endl;
     int status = system(index[listed_cases[i]].c_str()) / 256;
     if (status == 0) {
       std::cerr << "Test " << listed_cases[i] << " passed" << std::endl;
     } else {
       std::cerr << "Test " << listed_cases[i] << " failed" << std::endl;
-      std::cerr << "status code: " << status << std::endl;
+      std::cerr << "status code = " << status << std::endl;
       std::cerr
           << "Brief info: "
           << (config["StatusInterpreter"].contains(std::to_string(status))
@@ -83,6 +83,7 @@ int main(int argc, char *argv[]) {
         return 1;
       }
     }
+    std::cerr << '\n' << std::endl;
   }
   return 0;
 }
