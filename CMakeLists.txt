@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-project(BigInt)
+cmake_minimum_required(VERSION 3.16)
+project(Int2048)
 add_subdirectory(src)
 add_subdirectory(data)
 add_subdirectory(tester)

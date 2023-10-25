@@ -1,5 +1,5 @@
 {
-  "StatusInterpreter":{"0":"OK","1":"Error"},
+  "StatusInterpreter":{"0":"OK","1":"Error","139":"Segmentation fault"},
   "Cases":
   [
     {"command":"timeout -s 9 10s /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/data/C1T1 >/tmp/C1T1.out && diff -b -B -u /tmp/C1T1.out /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/data/Integer1/1.out","uid":"#1","tid":"/1/1"},
