@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     while (std::getline(list_file, line)) {
       listed_cases.push_back(line);
     }
-  } else
+  } else if (!test_listed_cases)
     throw std::runtime_error("No test cases specified");
   int total_cases = 0, total_passed = 0;
   for (int i = 0; i < listed_cases.size(); i++) {

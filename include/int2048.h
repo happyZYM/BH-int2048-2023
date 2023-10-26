@@ -10,6 +10,13 @@
 
 namespace sjtu {
 class int2048 {
+  size_t buf_length = 0;
+  const static int kMod = 100000000, kNum = 8, kDefaultLength = 10;
+  const static int kMemAdditionScalar = 2, kMemDeleteScalar = 4;
+  int *val = nullptr;
+  signed char flag = +1;
+  int num_length = 0;
+
  public:
   int2048();
   int2048(long long);

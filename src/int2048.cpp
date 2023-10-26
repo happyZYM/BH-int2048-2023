@@ -23,32 +23,104 @@
  */
 #include "int2048.h"
 
+#include <cstdio>
+#include <cstring>
 namespace sjtu {
 // 构造函数
 int2048::int2048() {
   // 实现构造函数逻辑
+  buf_length = kDefaultLength;
+  val = new int[buf_length]();
+  flag = 1;
+  num_length = 1;
 }
 
-int2048::int2048(long long) {
+int2048::int2048(long long input_value) {
   // 实现构造函数逻辑
+  buf_length = kDefaultLength;
+  val = new int[buf_length]();
+  if (input_value < 0) {
+    flag = -1;
+    input_value = -input_value;
+  } else
+    flag = 1;
+  if (input_value == 0) {
+    num_length = 1;
+    return;
+  }
+  num_length = 0;
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  while (input_value > 0) {
+    val[num_length / kNum] += (input_value % 10) * kPow10[num_length % kNum];
+    input_value /= 10;
+    num_length++;
+  }
 }
 
-int2048::int2048(const std::string &) {
+int2048::int2048(const std::string &input_value) {
   // 实现构造函数逻辑
+  buf_length = input_value.length() / kNum * kMemAdditionScalar;
+  val = new int[buf_length]();
+  flag = 1;
+  num_length = 0;
+  if (input_value[0] == '-') {
+    flag = -1;
+  }
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  int read_highest_pos = (flag > 0 ? 0 : 1);
+  while (input_value[read_highest_pos] == '0' &&
+         read_highest_pos + 1 < input_value.length())
+    read_highest_pos++;
+  for (int i = input_value.length() - 1; i >= read_highest_pos; i--) {
+    val[num_length / kNum] +=
+        (input_value[i] - '0') * kPow10[num_length % kNum];
+    num_length++;
+  }
+  if (num_length == 1 && val[0] == 0) flag = 1;
 }
 
-int2048::int2048(const int2048 &) {
-  // 实现构造函数逻辑
+int2048::int2048(const int2048 &input_value) {
+  buf_length = input_value.buf_length;
+  val = new int[buf_length]();
+  memcpy(val, input_value.val, buf_length * sizeof(int));
+  flag = input_value.flag;
+  num_length = input_value.num_length;
 }
 
 // 读入一个大整数
-void int2048::read(const std::string &) {
-  // 实现读取逻辑
+void int2048::read(const std::string &input_value) {
+  delete[] val;
+  buf_length = input_value.length() / kNum * kMemAdditionScalar;
+  val = new int[buf_length]();
+  flag = 1;
+  num_length = 0;
+  if (input_value[0] == '-') {
+    flag = -1;
+  }
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  int read_highest_pos = (flag > 0 ? 0 : 1);
+  while (input_value[read_highest_pos] == '0' &&
+         read_highest_pos + 1 < input_value.length())
+    read_highest_pos++;
+  for (int i = input_value.length() - 1; i >= read_highest_pos; i--) {
+    val[num_length / kNum] +=
+        (input_value[i] - '0') * kPow10[num_length % kNum];
+    num_length++;
+  }
+  if (num_length == 1 && val[0] == 0) flag = 1;
 }
 
 // 输出储存的大整数，无需换行
 void int2048::print() {
   // 实现输出逻辑
+  if (flag == -1) putchar('-');
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  for (int i = num_length - 1; i >= 0; i--)
+    putchar('0' + val[i / kNum] / kPow10[i % kNum] % 10);
 }
 
 // 加上一个大整数
