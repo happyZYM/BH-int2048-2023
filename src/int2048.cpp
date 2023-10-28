@@ -235,6 +235,8 @@ inline void UnsignedMinus(int2048 &A, const int2048 *const pB) {
   for (int i = 0; i < A.num_length; i++)
     if (A.val[i / A.kNum] / kPow10[i % A.kNum] > 0) new_length = i + 1;
   A.num_length = new_length;
+  if (A.num_length == 0) A.num_length = 1;
+  A.ClaimMem(A.num_length);
 }
 
 // 减去一个大整数
