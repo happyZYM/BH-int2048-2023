@@ -28,6 +28,7 @@ class int2048 {
   int2048(const std::string &);
   int2048(const int2048 &);
   int2048 (int2048 &&) noexcept;
+  ~int2048();
 
   void read(const std::string &);
   void print();

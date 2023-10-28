@@ -35,6 +35,10 @@ int2048::int2048() {
   flag = 1;
   num_length = 1;
 }
+int2048::~int2048() {
+  // 实现析构函数逻辑
+  if (val != nullptr) delete[] val;
+}
 
 int2048::int2048(long long input_value) {
   // 实现构造函数逻辑
@@ -174,10 +178,6 @@ inline void UnsignedAdd(int2048 &A, const int2048 *const pB) {
     A.num_length++;
 }
 
-inline void UnsignedMinus(int2048 &A, const int2048 *const pB) {
-  if (&A == pB) throw "UnsignedMinus: A and B are the same object";
-  ;
-}
 // 加上一个大整数
 int2048 &int2048::add(const int2048 &B) {
   // 实现加法逻辑
@@ -203,6 +203,7 @@ int2048 &int2048::add(const int2048 &B) {
       if (this == &B) pB = new int2048(B);
       UnsignedMinus(*this, pB);
       this->flag = -1;
+      if (this->num_length == 1 && this->val[0] == 0) this->flag = 1;
     } else {
       int2048 new_B = std::move(*this);
       *this = B;
@@ -219,12 +220,44 @@ int2048 add(int2048 A, const int2048 &B) {
   return A.add(B);
 }
 
+inline void UnsignedMinus(int2048 &A, const int2048 *const pB) {
+  if (&A == pB) throw "UnsignedMinus: A and B are the same object";
+  for (int i = 0; i < (pB->num_length + A.kNum - 1) / A.kNum; i++) {
+    A.val[i] -= pB->val[i];
+    if (A.val[i] < 0) {
+      A.val[i] += A.kMod;
+      A.val[i + 1]--;
+    }
+  }
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  int new_length = 0;
+  for (int i = 0; i < A.num_length; i++)
+    if (A.val[i / A.kNum] / kPow10[i % A.kNum] > 0) new_length = i + 1;
+  A.num_length = new_length;
+}
+
 // 减去一个大整数
 int2048 &int2048::minus(const int2048 &B) {
   // 实现减法逻辑
   const int2048 *pB = &B;
-  if (this == &B) pB = new int2048(B);
-  UnsignedMinus(*this, pB);
+  if (this->flag == B.flag) {
+    int cmp = UnsignedCmp(*this, *pB);
+    if (cmp >= 0) {
+      if (this == &B) pB = new int2048(B);
+      UnsignedMinus(*this, pB);
+      if (this->num_length == 1 && this->val[0] == 0) this->flag = 1;
+    } else {
+      int2048 new_B = std::move(*this);
+      *this = B;
+      UnsignedMinus(*this, &new_B);
+      this->flag = -this->flag;
+      if (this->num_length == 1 && this->val[0] == 0) this->flag = 1;
+    }
+  } else {
+    if (this == &B) pB = new int2048(B);
+    UnsignedAdd(*this, pB);
+  }
   return *this;
 }
 
