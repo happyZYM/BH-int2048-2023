@@ -359,6 +359,7 @@ std::istream &operator>>(std::istream &stream, int2048 &V) {
   std::string v_str;
   stream >> v_str;
   V.read(v_str);
+  return stream;
 }
 
 std::ostream &operator<<(std::ostream &stream, const int2048 &v) {
@@ -368,6 +369,7 @@ std::ostream &operator<<(std::ostream &stream, const int2048 &v) {
                                 100000, 1000000, 10000000, 100000000};
   for (int i = v.num_length - 1; i >= 0; i--)
     stream << char('0' + v.val[i / v.kNum] / kPow10[i % v.kNum] % 10);
+  return stream;
 }
 
 bool operator==(const int2048 &A, const int2048 &B) {
