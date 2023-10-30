@@ -425,7 +425,10 @@ inline void UnsignedMultiply(int2048 &A, const int2048 *pB) {
              kPow10[(A.num_length - 1) % int2048::kNum] ==
          0) {
     A.num_length--;
-    if (A.num_length == 0) throw "UnsignedMultiply: num_length==0";
+    if (A.num_length == 0) {
+      A.num_length = 1;
+      break;
+    }
   }
   delete[] pDA;
   delete[] pDB;
@@ -462,12 +465,134 @@ int2048 operator*(int2048 A, const int2048 &B) {
   return std::move(A);
 }
 
-int2048 &int2048::operator/=(const int2048 &) {
-  // 实现复合除法逻辑
+void int2048::RightMoveBy(int L) {
+  if (L >= this->num_length) {
+    this->num_length = 1;
+    this->val[0] = 0;
+    return;
+  }
+  int big_move = L / int2048::kNum;
+  int small_move = L % int2048::kNum;
+  for (int i = 0; i < this->num_length - big_move; i++) {
+    this->val[i] = this->val[i + big_move];
+  }
+  for (int i = this->num_length - big_move; i < this->num_length; i++) {
+    this->val[i] = 0;
+  }
+  this->num_length -= big_move * int2048::kNum;
+  if (small_move == 0) return;
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  for (int i = 0; i < this->num_length; i++) {
+    this->val[i] /= kPow10[small_move];
+    if (i + 1 < this->num_length) {
+      this->val[i] += this->val[i + 1] % kPow10[small_move] *
+                      kPow10[int2048::kNum - small_move];
+    }
+  }
+  this->num_length -= small_move;
 }
 
-int2048 operator/(int2048, const int2048 &) {
+inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
+  int L1 = A.num_length, L2 = pB->num_length;
+  if (2 * L1 - L2 - 1 < 0) {
+    A = std::move(int2048(0));
+    return;
+  }
+  if (UnsignedCmp(A, *pB) < 0) {
+    A = std::move(int2048(0));
+    return;
+  }
+  int2048 x;
+  /*init x as 10^(L1-L2)*/
+  x.ClaimMem(L1 - L2 + 1);
+  x.num_length = L1 - L2 + 1;
+  memset(x.val, 0, x.buf_length * sizeof(int));
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  x.val[(x.num_length - 1) / int2048::kNum] =
+      kPow10[(x.num_length - 1) % int2048::kNum];
+  /*reset x.num_length*/
+  while (x.val[(x.num_length - 1) / int2048::kNum] /
+             kPow10[(x.num_length - 1) % int2048::kNum] ==
+         0) {
+    x.num_length--;
+    if (x.num_length == 0) throw "UnsignedMultiply: num_length==0";
+  }
+  int2048 x_pre(x);
+  int2048 kOne(1);
+  UnsignedMinus(x_pre, &kOne);
+  while (true) {
+    /**
+     * x_{n+1}=2*x_n-x_n*x_n*B/(10^L1))
+     */
+    int2048 tmp = *pB;
+    UnsignedMultiply(tmp, &x);
+    UnsignedMultiply(tmp, &x);
+    tmp.RightMoveBy(L1);
+    int2048 x_next = x;
+    UnsignedAdd(x_next, &x);
+    UnsignedMinus(x_next, &tmp);
+    if (UnsignedCmp(x_next, x) == 0) break;
+    if (UnsignedCmp(x_next, x_pre) == 0) break;
+    x_pre = std::move(x);
+    x = std::move(x_next);
+  }
+  /*ret=A*x/10^(L1)*/
+  UnsignedMultiply(x, &A);
+  x.RightMoveBy(L1);
+  /*remain=A -B*ret*/
+  int2048 tmp = *pB;
+  UnsignedMultiply(tmp, &x);
+  if (UnsignedCmp(A, tmp) < 0) {
+    x -= 1;
+    tmp = *pB;
+    UnsignedMultiply(tmp, &x);
+  }
+  UnsignedMinus(A, &tmp);
+  int2048 remain = std::move(A);
+  while (UnsignedCmp(remain, *pB) >= 0) {
+    UnsignedMinus(remain, pB);
+    UnsignedAdd(x, &kOne);
+  }
+  A = std::move(x);
+}
+int2048 &int2048::Divide(const int2048 &B) {
+  if (this == &B) {
+    *this = std::move(int2048(1));
+    return *this;
+  }
+  if (B.num_length == 1 && B.val[0] == 0) {
+    *this = std::move(int2048(0));
+    return *this;
+    // throw "Divide: divide by zero";
+  }
+  int2048 origin_A(*this);
+  int flag_store = this->flag * B.flag;
+  UnsignedDivide(*this, &B);
+  this->flag = flag_store;
+  if (this->flag == -1) {
+    if (origin_A != (*this) * B) {
+      *this -= 1;
+    }
+  }
+  if (this->num_length == 1 && this->val[0] == 0) this->flag = 1;
+  return *this;
+}
+int2048 Divide(int2048 A, const int2048 &B) {
+  A.Divide(B);
+  return std::move(A);
+}
+
+int2048 &int2048::operator/=(const int2048 &B) {
+  // 实现复合除法逻辑
+  return this->Divide(B);
+}
+
+int2048 operator/(int2048 A, const int2048 &B) {
   // 实现除法逻辑
+  A.Divide(B);
+  return std::move(A);
 }
 
 int2048 &int2048::operator%=(const int2048 &) {

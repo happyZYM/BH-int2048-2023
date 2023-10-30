@@ -49,6 +49,8 @@ root= 6
   __int128_t QuickPow(__int128_t v, long long q);
   void NTTTransform(__int128_t *, int, bool);
 
+  void RightMoveBy(int);
+
  public:
   int2048();
   int2048(long long);
@@ -89,6 +91,10 @@ root= 6
 
   int2048 &operator*=(const int2048 &);
   friend int2048 operator*(int2048, const int2048 &);
+
+  inline friend void UnsignedDivide(int2048 &, const int2048 *);
+  int2048 &Divide(const int2048 &);
+  friend int2048 Divide(int2048, const int2048 &);
 
   int2048 &operator/=(const int2048 &);
   friend int2048 operator/(int2048, const int2048 &);

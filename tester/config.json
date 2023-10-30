@@ -26,6 +26,7 @@
     {"command":"timeout -s 9 10s /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/data/C2T17 >/tmp/C2T17.out && diff -b -B -u /tmp/C2T17.out /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/data/Integer2/17.out >/tmp/diffC2T17","uid":"#27","tid":"/2/17"},
     {"command":"timeout -s 9 10s /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/data/C2T18 >/tmp/C2T18.out && diff -b -B -u /tmp/C2T18.out /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/data/Integer2/18.out >/tmp/diffC2T18","uid":"#28","tid":"/2/18"},
     {"command":"/home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/tester/cases/1.py","uid":"#29","tid":"/3/1"},
-    {"command":"/home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/tester/cases/2.py","uid":"#30","tid":"/3/2"}
+    {"command":"/home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/tester/cases/2.py","uid":"#30","tid":"/3/2"},
+    {"command":"/home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/tester/cases/3.py","uid":"#31","tid":"/3/3"}
   ]
 }
