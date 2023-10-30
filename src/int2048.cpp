@@ -595,12 +595,17 @@ int2048 operator/(int2048 A, const int2048 &B) {
   return std::move(A);
 }
 
-int2048 &int2048::operator%=(const int2048 &) {
+int2048 &int2048::operator%=(const int2048 &B) {
   // 实现复合取模逻辑
+  int2048 C=(*this)/B;
+  *this=*this-C*B;
+  return *this;
 }
 
-int2048 operator%(int2048, const int2048 &) {
+int2048 operator%(int2048 A, const int2048 &B) {
   // 实现取模逻辑
+  int2048 C=A/B;
+  return A-C*B;
 }
 
 std::istream &operator>>(std::istream &stream, int2048 &V) {
