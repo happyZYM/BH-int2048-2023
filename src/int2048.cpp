@@ -176,7 +176,7 @@ inline void UnsignedAdd(int2048 &A, const int2048 *const pB) {
        i++) {
     if (i < (pB->num_length + int2048::kNum - 1) / int2048::kNum)
       A.val[i] += pB->val[i];
-    A.val[i + 1] += A.val[i] / int2048::kMod;
+    if (i + 1 < A.buf_length) A.val[i + 1] += A.val[i] / int2048::kMod;
     A.val[i] %= int2048::kMod;
   }
   A.num_length = std::max(A.num_length, pB->num_length);
@@ -473,19 +473,19 @@ void int2048::RightMoveBy(int L) {
   }
   int big_move = L / int2048::kNum;
   int small_move = L % int2048::kNum;
-  for (int i = 0; i < this->num_length - big_move; i++) {
+  for (int i = 0; i < this->buf_length - big_move; i++) {
     this->val[i] = this->val[i + big_move];
   }
-  for (int i = this->num_length - big_move; i < this->num_length; i++) {
+  for (int i = this->buf_length - big_move; i < this->buf_length; i++) {
     this->val[i] = 0;
   }
   this->num_length -= big_move * int2048::kNum;
   if (small_move == 0) return;
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                 100000, 1000000, 10000000, 100000000};
-  for (int i = 0; i < this->num_length; i++) {
+  for (int i = 0; i < this->buf_length; i++) {
     this->val[i] /= kPow10[small_move];
-    if (i + 1 < this->num_length) {
+    if (i + 1 < this->buf_length) {
       this->val[i] += this->val[i + 1] % kPow10[small_move] *
                       kPow10[int2048::kNum - small_move];
     }
