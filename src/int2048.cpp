@@ -217,7 +217,7 @@ int2048 &int2048::add(const int2048 &B) {
 // 返回两个大整数之和
 int2048 add(int2048 A, const int2048 &B) {
   // 实现加法逻辑
-  return A.add(B);
+  return std::move(A.add(B));
 }
 
 inline void UnsignedMinus(int2048 &A, const int2048 *const pB) {
@@ -266,21 +266,21 @@ int2048 &int2048::minus(const int2048 &B) {
 // 返回两个大整数之差
 int2048 minus(int2048 A, const int2048 &B) {
   // 实现减法逻辑
-  return A.minus(B);
+  return std::move(A.minus(B));
 }
 
 // 运算符重载
 
 int2048 int2048::operator+() const {
   // 实现一元加法逻辑
-  return int2048(*this);
+  return std::move(int2048(*this));
 }
 
 int2048 int2048::operator-() const {
   // 实现一元减法逻辑
   int2048 ret(*this);
   if (!(ret.num_length == 1 && ret.val[0] == 0)) ret.flag = -ret.flag;
-  return ret;
+  return std::move(ret);
 }
 
 int2048 &int2048::operator=(const int2048 &B) {
@@ -316,7 +316,7 @@ int2048 &int2048::operator+=(const int2048 &B) {
 int2048 operator+(int2048 A, const int2048 &B) {
   // 实现加法逻辑
   A.add(B);
-  return A;
+  return std::move(A);
 }
 
 int2048 &int2048::operator-=(const int2048 &B) {
@@ -327,15 +327,32 @@ int2048 &int2048::operator-=(const int2048 &B) {
 int2048 operator-(int2048 A, const int2048 &B) {
   // 实现减法逻辑
   A.minus(B);
-  return A;
+  return std::move(A);
 }
 
-int2048 &int2048::operator*=(const int2048 &) {
+inline void UnsignedMultiply(int2048 &A, const int2048 *pB) { ; }
+
+int2048 &int2048::Multiply(const int2048 &B) {
   // 实现复合乘法逻辑
+  const int2048 *pB = &B;
+  if (this == &B) pB = new int2048(B);
+  return *this;
 }
 
-int2048 operator*(int2048, const int2048 &) {
+int2048 Multiply(int2048 A, const int2048 &B) {
   // 实现乘法逻辑
+  return std::move(A.Multiply(B));
+}
+
+int2048 &int2048::operator*=(const int2048 &B) {
+  // 实现复合乘法逻辑
+  return this->Multiply(B);
+}
+
+int2048 operator*(int2048 A, const int2048 &B) {
+  // 实现乘法逻辑
+  A.Multiply(B);
+  return std::move(A);
 }
 
 int2048 &int2048::operator/=(const int2048 &) {

@@ -27,7 +27,7 @@ class int2048 {
   int2048(long long);
   int2048(const std::string &);
   int2048(const int2048 &);
-  int2048 (int2048 &&) noexcept;
+  int2048(int2048 &&) noexcept;
   ~int2048();
 
   void read(const std::string &);
@@ -35,9 +35,9 @@ class int2048 {
 
   void ClaimMem(size_t);
 
-  inline friend int UnsignedCmp(const int2048 &A,const int2048 &B);
-  inline friend void UnsignedAdd(int2048 &,const int2048 *pB);
-  inline friend void UnsignedMinus(int2048 &,const int2048 *pB);
+  inline friend int UnsignedCmp(const int2048 &, const int2048 &);
+  inline friend void UnsignedAdd(int2048 &, const int2048 *);
+  inline friend void UnsignedMinus(int2048 &, const int2048 *);
   int2048 &add(const int2048 &);
   friend int2048 add(int2048, const int2048 &);
 
@@ -55,6 +55,10 @@ class int2048 {
 
   int2048 &operator-=(const int2048 &);
   friend int2048 operator-(int2048, const int2048 &);
+
+  inline friend void UnsignedMultiply(int2048 &, const int2048 *);
+  int2048 &Multiply(const int2048 &);
+  friend int2048 Multiply(int2048, const int2048 &);
 
   int2048 &operator*=(const int2048 &);
   friend int2048 operator*(int2048, const int2048 &);
