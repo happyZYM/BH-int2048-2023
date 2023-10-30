@@ -330,12 +330,22 @@ int2048 operator-(int2048 A, const int2048 &B) {
   return std::move(A);
 }
 
-inline void UnsignedMultiply(int2048 &A, const int2048 *pB) { ; }
+inline void UnsignedMultiply(int2048 &A, const int2048 *pB)
+{
+  ;
+}
 
 int2048 &int2048::Multiply(const int2048 &B) {
   // 实现复合乘法逻辑
   const int2048 *pB = &B;
   if (this == &B) pB = new int2048(B);
+  if ((this->num_length == 1 && this->val[0]) ||
+      (pB->num_length == 1 && pB->val[0] == 0)) {
+    *this = std::move(int2048(0));
+    return *this;
+  }
+  this->flag = this->flag * pB->flag;
+  UnsignedMultiply(*this,pB);
   return *this;
 }
 

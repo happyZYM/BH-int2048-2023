@@ -22,6 +22,8 @@ class int2048 {
   signed char flag = +1;
   int num_length = 0;
 
+  void NTT(__int128_t *, int, int);
+
  public:
   int2048();
   int2048(long long);
