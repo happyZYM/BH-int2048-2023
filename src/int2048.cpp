@@ -102,7 +102,10 @@ int2048::int2048(int2048 &&input_value) noexcept {
   val = input_value.val;
   flag = input_value.flag;
   num_length = input_value.num_length;
-  input_value.val = nullptr;
+  input_value.buf_length = kDefaultLength;
+  input_value.flag = 1;
+  input_value.num_length = 1;
+  input_value.val = new int[input_value.buf_length]();
 }
 
 // 读入一个大整数
@@ -313,7 +316,10 @@ int2048 &int2048::operator=(int2048 &&B) noexcept {
   val = B.val;
   flag = B.flag;
   num_length = B.num_length;
-  B.val = nullptr;
+  B.buf_length = kDefaultLength;
+  B.flag = 1;
+  B.num_length = 1;
+  B.val = new int[B.buf_length]();
   return *this;
 }
 
