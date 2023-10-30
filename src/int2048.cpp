@@ -25,6 +25,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <utility>
 
 static_assert(sizeof(int) == 4, "sizeof(int) != 4");
@@ -135,11 +136,16 @@ void int2048::read(const std::string &input_value) {
 // 输出储存的大整数，无需换行
 void int2048::print() {
   // 实现输出逻辑
-  if (flag == -1) putchar('-');
+  char *buf = new char[num_length + 5];
+  char *p = buf;
+  if (flag == -1) *p++ = '-';
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                 100000, 1000000, 10000000, 100000000};
   for (int i = num_length - 1; i >= 0; i--)
-    putchar('0' + val[i / kNum] / kPow10[i % kNum] % 10);
+    *p++ = char('0' + val[i / int2048::kNum] / kPow10[i % int2048::kNum] % 10);
+  *p++ = 0;
+  std::cout << buf;
+  delete[] buf;
 }
 
 void int2048::ClaimMem(size_t number_length) {
@@ -524,9 +530,32 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     x.num_length--;
     if (x.num_length == 0) throw "UnsignedMultiply: num_length==0";
   }
+  /*check the highest number of B*/
+  if (pB->val[(pB->num_length - 1) / int2048::kNum] /
+          kPow10[(pB->num_length - 1) % int2048::kNum] ==
+      1) {
+    /* x=5*x */
+    int2048 tmp(x);
+    tmp.add(tmp);
+    tmp.add(tmp);
+    x.add(tmp);
+  } else if (pB->val[(pB->num_length - 1) / int2048::kNum] /
+                 kPow10[(pB->num_length - 1) % int2048::kNum] <
+             3) {
+    /* x=3*x */
+    int2048 tmp(x);
+    tmp.add(tmp);
+    x.add(tmp);
+  } else if (pB->val[(pB->num_length - 1) / int2048::kNum] /
+                 kPow10[(pB->num_length - 1) % int2048::kNum] <
+             5) {
+    /* x=2*x */
+    x.add(x);
+  }
   int2048 x_pre(x);
   int2048 kOne(1);
   UnsignedMinus(x_pre, &kOne);
+  int cnt = 0;
   while (true) {
     /**
      * x_{n+1}=2*x_n-x_n*x_n*B/(10^L1))
@@ -542,6 +571,7 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     if (UnsignedCmp(x_next, x_pre) == 0) break;
     x_pre = std::move(x);
     x = std::move(x_next);
+    cnt++;
   }
   /*ret=A*x/10^(L1)*/
   UnsignedMultiply(x, &A);
@@ -559,7 +589,9 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   while (UnsignedCmp(remain, *pB) >= 0) {
     UnsignedMinus(remain, pB);
     UnsignedAdd(x, &kOne);
+    // cnt++;
   }
+  std::cerr << cnt << std::endl;
   A = std::move(x);
 }
 int2048 &int2048::Divide(const int2048 &B) {
@@ -602,15 +634,18 @@ int2048 operator/(int2048 A, const int2048 &B) {
 
 int2048 &int2048::operator%=(const int2048 &B) {
   // 实现复合取模逻辑
-  int2048 C = (*this) / B;
-  *this = *this - C * B;
+  int2048 C(*this);
+  C.Divide(B);
+  this->minus(C.Multiply(B));
   return *this;
 }
 
 int2048 operator%(int2048 A, const int2048 &B) {
   // 实现取模逻辑
-  int2048 C = A / B;
-  return A - C * B;
+  int2048 C(A);
+  C.Divide(B);
+  A.minus(C.Multiply(B));
+  return std::move(A);
 }
 
 std::istream &operator>>(std::istream &stream, int2048 &V) {
@@ -623,12 +658,17 @@ std::istream &operator>>(std::istream &stream, int2048 &V) {
 
 std::ostream &operator<<(std::ostream &stream, const int2048 &v) {
   // 实现输出运算符逻辑
-  if (v.flag == -1) stream << '-';
+  char *buf = new char[v.num_length + 5];
+  char *p = buf;
+  if (v.flag == -1) *p++ = '-';
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                 100000, 1000000, 10000000, 100000000};
   for (int i = v.num_length - 1; i >= 0; i--)
-    stream << char('0' +
-                   v.val[i / int2048::kNum] / kPow10[i % int2048::kNum] % 10);
+    *p++ =
+        char('0' + v.val[i / int2048::kNum] / kPow10[i % int2048::kNum] % 10);
+  *p++ = 0;
+  stream << buf;
+  delete[] buf;
   return stream;
 }
 
