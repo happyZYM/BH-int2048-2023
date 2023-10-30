@@ -221,6 +221,7 @@ int2048 &int2048::add(const int2048 &B) {
       this->flag = 1;
     }
   }
+  if (pB != &B) delete pB;
   return *this;
 }
 
@@ -272,6 +273,7 @@ int2048 &int2048::minus(const int2048 &B) {
     if (this == &B) pB = new int2048(B);
     UnsignedAdd(*this, pB);
   }
+  if (pB != &B) delete pB;
   return *this;
 }
 
@@ -442,10 +444,12 @@ int2048 &int2048::Multiply(const int2048 &B) {
   if ((this->num_length == 1 && this->val[0] == 0) ||
       (pB->num_length == 1 && pB->val[0] == 0)) {
     *this = std::move(int2048(0));
+    if (pB != &B) delete pB;
     return *this;
   }
   this->flag = this->flag * pB->flag;
   UnsignedMultiply(*this, pB);
+  if (pB != &B) delete pB;
   return *this;
 }
 
@@ -495,6 +499,7 @@ void int2048::RightMoveBy(int L) {
 
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   int L1 = A.num_length, L2 = pB->num_length;
+  if (&A == pB) throw "UnsignedDivide: A and B are the same object";
   if (2 * L1 - L2 - 1 < 0) {
     A = std::move(int2048(0));
     return;
@@ -597,15 +602,15 @@ int2048 operator/(int2048 A, const int2048 &B) {
 
 int2048 &int2048::operator%=(const int2048 &B) {
   // 实现复合取模逻辑
-  int2048 C=(*this)/B;
-  *this=*this-C*B;
+  int2048 C = (*this) / B;
+  *this = *this - C * B;
   return *this;
 }
 
 int2048 operator%(int2048 A, const int2048 &B) {
   // 实现取模逻辑
-  int2048 C=A/B;
-  return A-C*B;
+  int2048 C = A / B;
+  return A - C * B;
 }
 
 std::istream &operator>>(std::istream &stream, int2048 &V) {
