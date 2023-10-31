@@ -74,7 +74,7 @@ for opt in opt_cpp:
   print(opt,file=sourc_cpp)
 print(code_cpp_suf,file=sourc_cpp)
 sourc_cpp.close()
-system("g++ /tmp/1.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -o /tmp/1")
+system("g++ /tmp/1.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -fsanitize=address -g -o /tmp/1")
 system("/tmp/1 > /tmp/1_cpp.out")
 
 sourc_python=open("/tmp/1.py","w")

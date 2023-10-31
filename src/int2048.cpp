@@ -269,10 +269,11 @@ inline void UnsignedMinus(int2048 &A, const int2048 *const pB, bool inverse) {
     int blocks_A = (A.num_length + int2048::kNum - 1) / int2048::kNum;
     int blocks_B = (pB->num_length + int2048::kNum - 1) / int2048::kNum;
     if (blocks_A < blocks_B) A.ClaimMem(blocks_A * int2048::kNum);
+    blocks_A = (A.num_length + int2048::kNum - 1) / int2048::kNum;
     for (int i = (pB->num_length + int2048::kNum - 1) / int2048::kNum - 1;
          i >= 0; i--) {
-      A.val[i] -= pB->val[i];
-      if (A.val[i] < 0 && i - 1 >= 0) {
+      if (i < blocks_B && i < blocks_A) A.val[i] -= pB->val[i];
+      if (i < blocks_A && A.val[i] < 0 && i - 1 >= 0) {
         A.val[i] += int2048::kMod;
         A.val[i - 1]--;
       }
@@ -434,12 +435,12 @@ inline void UnsignedMultiply(int2048 &A, const int2048 *pB,
   __int128_t *pDB = new __int128_t[NTT_blocks]();
   __int128_t *pDC = new __int128_t[NTT_blocks]();
   for (int i = 0; i < blocks_of_A; i++) {
-    pDA[i << 1] = A.val[i] % int2048::kNTTBlcokBase;
-    pDA[(i << 1) | 1] = A.val[i] / int2048::kNTTBlcokBase;
+    pDA[i << 1] = A.val[i] % int2048::kNTTBlockBase;
+    pDA[(i << 1) | 1] = A.val[i] / int2048::kNTTBlockBase;
   }
   for (int i = 0; i < blocks_of_B; i++) {
-    pDB[i << 1] = pB->val[i] % int2048::kNTTBlcokBase;
-    pDB[(i << 1) | 1] = pB->val[i] / int2048::kNTTBlcokBase;
+    pDB[i << 1] = pB->val[i] % int2048::kNTTBlockBase;
+    pDB[(i << 1) | 1] = pB->val[i] / int2048::kNTTBlockBase;
   }
   A.NTTTransform(pDA, NTT_blocks);
   A.NTTTransform(pDB, NTT_blocks);
@@ -448,24 +449,24 @@ inline void UnsignedMultiply(int2048 &A, const int2048 *pB,
   A.NTTTransform(pDC, NTT_blocks, true);
   if (!inverse) {
     for (int i = 0; i < NTT_blocks - 1; i++) {
-      pDC[i + 1] += pDC[i] / int2048::kNTTBlcokBase;
-      pDC[i] %= int2048::kNTTBlcokBase;
+      pDC[i + 1] += pDC[i] / int2048::kNTTBlockBase;
+      pDC[i] %= int2048::kNTTBlockBase;
     }
-    if (pDC[NTT_blocks - 1] >= int2048::kNTTBlcokBase)
+    if (pDC[NTT_blocks - 1] >= int2048::kNTTBlockBase)
       throw "UnsignedMultiply: NTT result overflow";
   } else {
     for (int i = NTT_blocks - 1; i > 0; i--) {
-      if (i - 1 >= 0) pDC[i - 1] += pDC[i] / int2048::kNTTBlcokBase;
-      pDC[i] %= int2048::kNTTBlcokBase;
+      if (i - 1 >= 0) pDC[i - 1] += pDC[i] / int2048::kNTTBlockBase;
+      pDC[i] %= int2048::kNTTBlockBase;
     }
-    if (pDC[0] >= int2048::kNTTBlcokBase)
+    if (pDC[0] >= int2048::kNTTBlockBase)
       throw "UnsignedMultiply: NTT result overflow";
   }
   int flag_store = A.flag;
   A.ClaimMem(NTT_blocks * 4);
   memset(A.val, 0, A.buf_length * sizeof(int));
   for (int i = 0; i < NTT_blocks / 2; i++) {
-    A.val[i] = pDC[(i << 1) | 1] * int2048::kNTTBlcokBase + pDC[i << 1];
+    A.val[i] = pDC[(i << 1) | 1] * int2048::kNTTBlockBase + pDC[i << 1];
   }
   A.num_length = NTT_blocks * 4;
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
@@ -609,14 +610,13 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
       }
     }
     if (pre_pre_same || pre_same) break;
-    memcpy(store[tot ^ 1], store[tot], (pow_A + 3) * sizeof(int));
+    tot ^= 1;
     for (int i = 0; i < pow_A + 3; i++) {
       if (i < blocks_of_x)
         store[tot][i] = x.val[i];
       else
         store[tot][i] = 0;
     }
-    tot ^= 1;
   }
   delete[] store[0];
   delete[] store[1];
@@ -639,15 +639,15 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   UnsignedMultiply(A, &x);
   A.RightMoveBy((pow_B + pow_x) * int2048::kNum);
   /*Now we begin to process error*/
-  int2048 tmp(*pB),kOne(1);
+  int2048 tmp(*pB), kOne(1);
   UnsignedMultiply(tmp, &A);
   while (UnsignedCmp(origin_A, tmp) < 0) {
-    UnsignedMinus(A,&kOne);
+    UnsignedMinus(A, &kOne);
     UnsignedMinus(tmp, pB);
   }
   UnsignedMinus(origin_A, &tmp);
   while (UnsignedCmp(origin_A, *pB) >= 0) {
-    UnsignedAdd(A,&kOne);
+    UnsignedAdd(A, &kOne);
     UnsignedMinus(origin_A, pB);
   }
 }

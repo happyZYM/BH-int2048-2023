@@ -36,7 +36,7 @@ opt_python=[]
 
 if True:
   for i in range(0,10):
-    val=randint(-10**2,10**2)
+    val=randint(-10**200,10**200)
     opt_cpp.append("a_"+str(i)+"=int2048(\""+str(val)+"\");")
     opt_python.append("a_"+str(i)+"="+str(val))
     opt_cpp.append("a_"+str(i)+".print(); puts(\"\");")
@@ -80,7 +80,7 @@ for opt in opt_cpp:
   print(opt,file=sourc_cpp)
 print(code_cpp_suf,file=sourc_cpp)
 sourc_cpp.close()
-system("g++ /tmp/2.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -g -o /tmp/2")
+system("g++ /tmp/2.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -fsanitize=address -g -o /tmp/2")
 system("/tmp/2 > /tmp/2_cpp.out")
 
 sourc_python=open("/tmp/2.py","w")

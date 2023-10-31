@@ -39,7 +39,7 @@ root= 6
   const static __int128_t kNTTMod = 180143985094819841ll;
   const static __int128_t kNTTRoot = 6;
   const static int kNTTBlockNum = 4;
-  const static int kNTTBlcokBase = 10000;
+  const static int kNTTBlockBase = 10000;
 
   size_t buf_length = 0;
   int *val = nullptr;
