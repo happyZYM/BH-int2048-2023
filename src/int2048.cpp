@@ -555,7 +555,7 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   int2048 x_pre(x);
   int2048 kOne(1);
   UnsignedMinus(x_pre, &kOne);
-  int cnt = 0;
+  // int cnt = 0;
   while (true) {
     /**
      * x_{n+1}=2*x_n-x_n*x_n*B/(10^L1))
@@ -563,6 +563,8 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     int2048 tmp = *pB;
     UnsignedMultiply(tmp, &x);
     UnsignedMultiply(tmp, &x);
+    // std::cerr << "max length ratio during computing"
+              // << (double)tmp.num_length / (double)L1 << std::endl;
     tmp.RightMoveBy(L1);
     int2048 x_next = x;
     UnsignedAdd(x_next, &x);
@@ -571,7 +573,9 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     if (UnsignedCmp(x_next, x_pre) == 0) break;
     x_pre = std::move(x);
     x = std::move(x_next);
-    cnt++;
+    // std::cerr << "length ratio of x after each step"
+              // << (double)x.num_length / (double)L1 << std::endl;
+    // cnt++;
   }
   /*ret=A*x/10^(L1)*/
   UnsignedMultiply(x, &A);
@@ -591,7 +595,7 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     UnsignedAdd(x, &kOne);
     // cnt++;
   }
-  std::cerr << cnt << std::endl;
+  // std::cerr << cnt << std::endl;
   A = std::move(x);
 }
 int2048 &int2048::Divide(const int2048 &B) {
