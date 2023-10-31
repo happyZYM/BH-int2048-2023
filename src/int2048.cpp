@@ -23,6 +23,7 @@
  */
 #include "int2048.h"
 
+#include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -172,18 +173,34 @@ inline int UnsignedCmp(const int2048 &A, const int2048 &B) {
     if (A.val[i] != B.val[i]) return A.val[i] < B.val[i] ? -1 : 1;
   return 0;
 }
+inline void UnsignedMinus(int2048 &, const int2048 *, bool inverse = false);
 
-inline void UnsignedAdd(int2048 &A, const int2048 *const pB) {
+inline void UnsignedAdd(int2048 &A, const int2048 *const pB,
+                        bool inverse = false) {
   if (&A == pB) throw "UnsignedAdd: A and B are the same object";
   A.ClaimMem(std::max(A.num_length, pB->num_length) + 2);
-  for (int i = 0;
-       i < (std::max(A.num_length, pB->num_length) + int2048::kNum - 1) /
-               int2048::kNum;
-       i++) {
-    if (i < (pB->num_length + int2048::kNum - 1) / int2048::kNum)
-      A.val[i] += pB->val[i];
-    if (i + 1 < A.buf_length) A.val[i + 1] += A.val[i] / int2048::kMod;
-    A.val[i] %= int2048::kMod;
+  if (!inverse) {
+    for (int i = 0;
+         i < (std::max(A.num_length, pB->num_length) + int2048::kNum - 1) /
+                 int2048::kNum;
+         i++) {
+      if (i < (pB->num_length + int2048::kNum - 1) / int2048::kNum)
+        A.val[i] += pB->val[i];
+      if (i + 1 < A.buf_length) A.val[i + 1] += A.val[i] / int2048::kMod;
+      A.val[i] %= int2048::kMod;
+    }
+  } else {
+    for (int i = (std::max(A.num_length, pB->num_length) + int2048::kNum - 1) /
+                     int2048::kNum -
+                 1;
+         i >= 0; i--) {
+      if (i < (pB->num_length + int2048::kNum - 1) / int2048::kNum)
+        A.val[i] += pB->val[i];
+      if (A.val[i] >= int2048::kMod && i - 1 >= 0) {
+        A.val[i - 1] += A.val[i] / int2048::kMod;
+        A.val[i] %= int2048::kMod;
+      }
+    }
   }
   A.num_length = std::max(A.num_length, pB->num_length);
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
@@ -237,14 +254,28 @@ int2048 add(int2048 A, const int2048 &B) {
   return std::move(A.add(B));
 }
 
-inline void UnsignedMinus(int2048 &A, const int2048 *const pB) {
+inline void UnsignedMinus(int2048 &A, const int2048 *const pB, bool inverse) {
   if (&A == pB) throw "UnsignedMinus: A and B are the same object";
-  for (int i = 0; i < (pB->num_length + int2048::kNum - 1) / int2048::kNum;
-       i++) {
-    A.val[i] -= pB->val[i];
-    if (A.val[i] < 0) {
-      A.val[i] += int2048::kMod;
-      A.val[i + 1]--;
+  if (!inverse) {
+    for (int i = 0; i < (pB->num_length + int2048::kNum - 1) / int2048::kNum;
+         i++) {
+      A.val[i] -= pB->val[i];
+      if (A.val[i] < 0 && i + 1 < A.buf_length) {
+        A.val[i] += int2048::kMod;
+        A.val[i + 1]--;
+      }
+    }
+  } else {
+    int blocks_A = (A.num_length + int2048::kNum - 1) / int2048::kNum;
+    int blocks_B = (pB->num_length + int2048::kNum - 1) / int2048::kNum;
+    if (blocks_A < blocks_B) A.ClaimMem(blocks_A * int2048::kNum);
+    for (int i = (pB->num_length + int2048::kNum - 1) / int2048::kNum - 1;
+         i >= 0; i--) {
+      A.val[i] -= pB->val[i];
+      if (A.val[i] < 0 && i - 1 >= 0) {
+        A.val[i] += int2048::kMod;
+        A.val[i - 1]--;
+      }
     }
   }
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
@@ -391,7 +422,8 @@ void int2048::NTTTransform(__int128_t *a, int NTT_blocks,
     for (int i = 0; i < NTT_blocks; i++) (a[i] *= inv) %= int2048::kNTTMod;
   }
 }
-inline void UnsignedMultiply(int2048 &A, const int2048 *pB) {
+inline void UnsignedMultiply(int2048 &A, const int2048 *pB,
+                             bool inverse = false) {
   if (&A == pB) throw "UnsignedMultiply: A and B are the same object";
   int blocks_of_A = ((A.num_length + int2048::kNum - 1) / int2048::kNum);
   int blocks_of_B = ((pB->num_length + int2048::kNum - 1) / int2048::kNum);
@@ -414,12 +446,21 @@ inline void UnsignedMultiply(int2048 &A, const int2048 *pB) {
   for (int i = 0; i < NTT_blocks; i++)
     pDC[i] = (pDA[i] * pDB[i]) % int2048::kNTTMod;
   A.NTTTransform(pDC, NTT_blocks, true);
-  for (int i = 0; i < NTT_blocks - 1; i++) {
-    pDC[i + 1] += pDC[i] / int2048::kNTTBlcokBase;
-    pDC[i] %= int2048::kNTTBlcokBase;
+  if (!inverse) {
+    for (int i = 0; i < NTT_blocks - 1; i++) {
+      pDC[i + 1] += pDC[i] / int2048::kNTTBlcokBase;
+      pDC[i] %= int2048::kNTTBlcokBase;
+    }
+    if (pDC[NTT_blocks - 1] >= int2048::kNTTBlcokBase)
+      throw "UnsignedMultiply: NTT result overflow";
+  } else {
+    for (int i = NTT_blocks - 1; i > 0; i--) {
+      if (i - 1 >= 0) pDC[i - 1] += pDC[i] / int2048::kNTTBlcokBase;
+      pDC[i] %= int2048::kNTTBlcokBase;
+    }
+    if (pDC[0] >= int2048::kNTTBlcokBase)
+      throw "UnsignedMultiply: NTT result overflow";
   }
-  if (pDC[NTT_blocks - 1] >= int2048::kNTTBlcokBase)
-    throw "UnsignedMultiply: NTT result overflow";
   int flag_store = A.flag;
   A.ClaimMem(NTT_blocks * 4);
   memset(A.val, 0, A.buf_length * sizeof(int));
@@ -514,89 +555,101 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     A = std::move(int2048(0));
     return;
   }
-  int2048 x;
-  /*init x as 10^(L1-L2)*/
-  x.ClaimMem(L1 - L2 + 1);
-  x.num_length = L1 - L2 + 1;
-  memset(x.val, 0, x.buf_length * sizeof(int));
+  /**
+   * Now pre-process has done. We can start the main algorithm:
+   * 1. Convert B to scientific counting method and process the index.
+   * 2. In the state of reversing, calculate 1/B' using Newton-Raphson method.
+   * 3. Reverse the iterative results again and calculate the answer.
+   *
+   * Warning: in reversed mode, num_length has no exact meaning, just operate a
+   * block as a whole
+   */
+  int2048 origin_A(A);
+  int pow_A = (L1 + int2048::kNum - 1) / int2048::kNum - 1;
+  int pow_B = (L2 + int2048::kNum - 1) / int2048::kNum - 1;
+  // pow_B+1 is the number of blocks (with number) of B'
+  int2048 inverse_B(*pB);
+  for (int i = 0; (i << 1) < (pow_B + 1); i++)
+    std::swap(inverse_B.val[i], inverse_B.val[pow_B - i]);
+  int2048 x(int2048::kMod);
+  assert(x.val[1] == 1);
+  int *store[2];
+  store[0] = new int[pow_A + 5]();
+  store[1] = new int[pow_A + 5]();
+  int tot = 0;
+  for (int i = 0; i < pow_A + 1; i++) {
+    store[0][i] = A.val[i];
+    store[1][i] = -1;
+  }
+  while (true) {
+    int2048 invsere_two(2), tmp_x(x);
+    UnsignedMultiply(tmp_x, &inverse_B, true);
+    UnsignedMinus(invsere_two, &tmp_x, true);
+    UnsignedMultiply(x, &invsere_two, true);
+    /**
+     * now x is the next x, store[tot] stores last x, store[tot^1] stores the x
+     * previous to store[x]
+     */
+    int blocks_of_x = (x.num_length + int2048::kNum - 1) / int2048::kNum;
+    if (blocks_of_x > pow_A + 3) {
+      x.ClaimMem((pow_A + 3) * int2048::kNum);
+      blocks_of_x = pow_A + 3;
+    }
+    bool pre_same = true, pre_pre_same = true;
+    for (int i = 0; i < pow_A + 3; i++) {
+      if (store[tot][i] != (i < blocks_of_x ? x.val[i] : 0)) {
+        pre_same = false;
+        break;
+      }
+    }
+    for (int i = 0; i < pow_A + 3; i++) {
+      if (store[tot ^ 1][i] != (i < blocks_of_x ? x.val[i] : 0)) {
+        pre_pre_same = false;
+        break;
+      }
+    }
+    if (pre_pre_same || pre_same) break;
+    memcpy(store[tot ^ 1], store[tot], (pow_A + 3) * sizeof(int));
+    for (int i = 0; i < pow_A + 3; i++) {
+      if (i < blocks_of_x)
+        store[tot][i] = x.val[i];
+      else
+        store[tot][i] = 0;
+    }
+    tot ^= 1;
+  }
+  delete[] store[0];
+  delete[] store[1];
+  /**
+   * Now reverse x back.
+   */
+  int blocks_of_x = (x.num_length + int2048::kNum - 1) / int2048::kNum;
+  int pow_x = blocks_of_x - 1;
+  for (int i = 0; i < blocks_of_x / 2; i++)
+    std::swap(x.val[i], x.val[blocks_of_x - i - 1]);
+  x.num_length = blocks_of_x * int2048::kNum;
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                 100000, 1000000, 10000000, 100000000};
-  x.val[(x.num_length - 1) / int2048::kNum] =
-      kPow10[(x.num_length - 1) % int2048::kNum];
-  /*reset x.num_length*/
-  while (x.val[(x.num_length - 1) / int2048::kNum] /
-             kPow10[(x.num_length - 1) % int2048::kNum] ==
-         0) {
+  /*Now get the accurate x.num_length for future computing*/
+  while (x.num_length > 0 &&
+         x.val[(x.num_length - 1) / int2048::kNum] /
+                 kPow10[(x.num_length - 1) % int2048::kNum] ==
+             0)
     x.num_length--;
-    if (x.num_length == 0) throw "UnsignedMultiply: num_length==0";
+  UnsignedMultiply(A, &x);
+  A.RightMoveBy((pow_B + pow_x) * int2048::kNum);
+  /*Now we begin to process error*/
+  int2048 tmp(*pB),kOne(1);
+  UnsignedMultiply(tmp, &A);
+  while (UnsignedCmp(origin_A, tmp) < 0) {
+    UnsignedMinus(A,&kOne);
+    UnsignedMinus(tmp, pB);
   }
-  /*check the highest number of B*/
-  if (pB->val[(pB->num_length - 1) / int2048::kNum] /
-          kPow10[(pB->num_length - 1) % int2048::kNum] ==
-      1) {
-    /* x=5*x */
-    int2048 tmp(x);
-    tmp.add(tmp);
-    tmp.add(tmp);
-    x.add(tmp);
-  } else if (pB->val[(pB->num_length - 1) / int2048::kNum] /
-                 kPow10[(pB->num_length - 1) % int2048::kNum] <
-             3) {
-    /* x=3*x */
-    int2048 tmp(x);
-    tmp.add(tmp);
-    x.add(tmp);
-  } else if (pB->val[(pB->num_length - 1) / int2048::kNum] /
-                 kPow10[(pB->num_length - 1) % int2048::kNum] <
-             5) {
-    /* x=2*x */
-    x.add(x);
+  UnsignedMinus(origin_A, &tmp);
+  while (UnsignedCmp(origin_A, *pB) >= 0) {
+    UnsignedAdd(A,&kOne);
+    UnsignedMinus(origin_A, pB);
   }
-  int2048 x_pre(x);
-  int2048 kOne(1);
-  UnsignedMinus(x_pre, &kOne);
-  // int cnt = 0;
-  while (true) {
-    /**
-     * x_{n+1}=2*x_n-x_n*x_n*B/(10^L1))
-     */
-    int2048 tmp = *pB;
-    UnsignedMultiply(tmp, &x);
-    UnsignedMultiply(tmp, &x);
-    // std::cerr << "max length ratio during computing"
-              // << (double)tmp.num_length / (double)L1 << std::endl;
-    tmp.RightMoveBy(L1);
-    int2048 x_next = x;
-    UnsignedAdd(x_next, &x);
-    UnsignedMinus(x_next, &tmp);
-    if (UnsignedCmp(x_next, x) == 0) break;
-    if (UnsignedCmp(x_next, x_pre) == 0) break;
-    x_pre = std::move(x);
-    x = std::move(x_next);
-    // std::cerr << "length ratio of x after each step"
-              // << (double)x.num_length / (double)L1 << std::endl;
-    // cnt++;
-  }
-  /*ret=A*x/10^(L1)*/
-  UnsignedMultiply(x, &A);
-  x.RightMoveBy(L1);
-  /*remain=A -B*ret*/
-  int2048 tmp = *pB;
-  UnsignedMultiply(tmp, &x);
-  if (UnsignedCmp(A, tmp) < 0) {
-    x -= 1;
-    tmp = *pB;
-    UnsignedMultiply(tmp, &x);
-  }
-  UnsignedMinus(A, &tmp);
-  int2048 remain = std::move(A);
-  while (UnsignedCmp(remain, *pB) >= 0) {
-    UnsignedMinus(remain, pB);
-    UnsignedAdd(x, &kOne);
-    // cnt++;
-  }
-  // std::cerr << cnt << std::endl;
-  A = std::move(x);
 }
 int2048 &int2048::Divide(const int2048 &B) {
   if (this == &B) {

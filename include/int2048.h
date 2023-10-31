@@ -65,8 +65,8 @@ root= 6
   void ClaimMem(size_t);
 
   inline friend int UnsignedCmp(const int2048 &, const int2048 &);
-  inline friend void UnsignedAdd(int2048 &, const int2048 *);
-  inline friend void UnsignedMinus(int2048 &, const int2048 *);
+  inline friend void UnsignedAdd(int2048 &, const int2048 *, bool);
+  inline friend void UnsignedMinus(int2048 &, const int2048 *, bool);
   int2048 &add(const int2048 &);
   friend int2048 add(int2048, const int2048 &);
 
@@ -85,7 +85,7 @@ root= 6
   int2048 &operator-=(const int2048 &);
   friend int2048 operator-(int2048, const int2048 &);
 
-  inline friend void UnsignedMultiply(int2048 &, const int2048 *);
+  inline friend void UnsignedMultiply(int2048 &, const int2048 *, bool);
   int2048 &Multiply(const int2048 &);
   friend int2048 Multiply(int2048, const int2048 &);
 
