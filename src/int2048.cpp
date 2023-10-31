@@ -750,9 +750,9 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
       else
         store[tot][i] = 0;
     }
-    fprintf(stderr, "x: ");
-    for (int i = 0; i < blocks_of_x; i++) fprintf(stderr, "%08d ", x.val[i]);
-    fprintf(stderr, "\n");
+    // fprintf(stderr, "x: ");
+    // for (int i = 0; i < blocks_of_x; i++) fprintf(stderr, "%08d ", x.val[i]);
+    // fprintf(stderr, "\n");
   }
   delete[] store[0];
   delete[] store[1];
