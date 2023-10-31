@@ -510,7 +510,7 @@ inline void UnsignedMultiply(int2048 &A, const int2048 *pB,
     lenght_limit = std::min(lenght_limit, pB->num_length);
     blocks_of_B = lenght_limit / int2048::kNum;
     // assert(blocks_of_B ==
-          //  ((pB->num_length + int2048::kNum - 1) / int2048::kNum));
+    //  ((pB->num_length + int2048::kNum - 1) / int2048::kNum));
   }
   int max_blocks = blocks_of_A + blocks_of_B;
   int NTT_blocks = 2;
@@ -758,6 +758,7 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
       else
         store[tot][i] = 0;
     }
+    // std::cerr << "length of x" << x.num_length << std::endl;
     // fprintf(stderr, "x: ");
     // for (int i = 0; i < blocks_of_x; i++) fprintf(stderr, "%08d ", x.val[i]);
     // fprintf(stderr, "\n");
