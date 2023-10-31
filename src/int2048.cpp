@@ -638,11 +638,12 @@ void int2048::RestoreHalfBlock() {
   assert(this->num_length % int2048::kNum == 0);
   int blocks_num = this->num_length / int2048::kNum;
   for (int i = 0; i < blocks_num - 1; i++) {
-    val[i] *= int2048::kNTTBlockBase;
-    val[i] %= int2048::kStoreBase;
+    val[i] = ((long long)val[i] * int2048::kNTTBlockBase) % int2048::kStoreBase;
     val[i] += val[i + 1] / int2048::kNTTBlockBase;
   }
-  (val[blocks_num - 1] *= int2048::kNTTBlockBase) %= int2048::kStoreBase;
+  val[blocks_num - 1] =
+      ((long long)val[blocks_num - 1] * int2048::kNTTBlockBase) %
+      int2048::kStoreBase;
   while (this->num_length > 0 && val[this->num_length / int2048::kNum - 1] == 0)
     this->num_length -= int2048::kNum;
 }
