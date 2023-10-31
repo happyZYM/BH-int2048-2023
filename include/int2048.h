@@ -52,6 +52,7 @@ root= 6
   void RightMoveBy(int);
   void ProcessHalfBlock();
   void RestoreHalfBlock();
+
  public:
   int2048();
   int2048(long long);
@@ -86,7 +87,7 @@ root= 6
   int2048 &operator-=(const int2048 &);
   friend int2048 operator-(int2048, const int2048 &);
 
-  inline friend void UnsignedMultiply(int2048 &, const int2048 *, bool);
+  inline friend void UnsignedMultiply(int2048 &, const int2048 *, bool, int);
   int2048 &Multiply(const int2048 &);
   friend int2048 Multiply(int2048, const int2048 &);
 

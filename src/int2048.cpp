@@ -501,10 +501,14 @@ void int2048::NTTTransform(__int128_t *a, int NTT_blocks,
   }
 }
 inline void UnsignedMultiply(int2048 &A, const int2048 *pB,
-                             bool inverse = false) {
+                             bool inverse = false, int lenght_limit = 0) {
   if (&A == pB) throw "UnsignedMultiply: A and B are the same object";
   int blocks_of_A = ((A.num_length + int2048::kNum - 1) / int2048::kNum);
   int blocks_of_B = ((pB->num_length + int2048::kNum - 1) / int2048::kNum);
+  if (inverse) {
+    lenght_limit = std::min(lenght_limit, pB->num_length);
+    blocks_of_B = lenght_limit;
+  }
   int max_blocks = blocks_of_A + blocks_of_B;
   int NTT_blocks = 2;
   while (NTT_blocks < (max_blocks << 1)) NTT_blocks <<= 1;
@@ -704,7 +708,7 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     }
     assert(tmp_x.num_length % int2048::kNum == 0);
     assert(inverse_B.num_length % int2048::kNum == 0);
-    UnsignedMultiply(tmp_x, &inverse_B, true);
+    UnsignedMultiply(tmp_x, &inverse_B, true, inverse_B.num_length);
     for (int i = 0; i < tmp_x_error + inverseB_error; i++)
       tmp_x.RestoreHalfBlock();
     UnsignedMinus(inverse_two, &tmp_x, true);
