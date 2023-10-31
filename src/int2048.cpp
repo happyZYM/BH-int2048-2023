@@ -506,8 +506,11 @@ inline void UnsignedMultiply(int2048 &A, const int2048 *pB,
   int blocks_of_A = ((A.num_length + int2048::kNum - 1) / int2048::kNum);
   int blocks_of_B = ((pB->num_length + int2048::kNum - 1) / int2048::kNum);
   if (inverse) {
+    assert(pB->num_length % int2048::kNum == 0);
     lenght_limit = std::min(lenght_limit, pB->num_length);
-    blocks_of_B = lenght_limit;
+    blocks_of_B = lenght_limit / int2048::kNum;
+    // assert(blocks_of_B ==
+          //  ((pB->num_length + int2048::kNum - 1) / int2048::kNum));
   }
   int max_blocks = blocks_of_A + blocks_of_B;
   int NTT_blocks = 2;
@@ -708,7 +711,8 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
     }
     assert(tmp_x.num_length % int2048::kNum == 0);
     assert(inverse_B.num_length % int2048::kNum == 0);
-    UnsignedMultiply(tmp_x, &inverse_B, true, inverse_B.num_length);
+    UnsignedMultiply(tmp_x, &inverse_B, true,
+                     tmp_x.num_length + 3 * int2048::kNum);
     for (int i = 0; i < tmp_x_error + inverseB_error; i++)
       tmp_x.RestoreHalfBlock();
     UnsignedMinus(inverse_two, &tmp_x, true);
@@ -721,7 +725,7 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
       x_error = 1;
       x.ProcessHalfBlock();
     }
-    UnsignedMultiply(x, &inverse_two, true);
+    UnsignedMultiply(x, &inverse_two, true, inverse_two.num_length);
     for (int i = 0; i < x_error + inverse_two_error; i++) x.RestoreHalfBlock();
     /**
      * now x is the next x, store[tot] stores last x, store[tot^1] stores the x
