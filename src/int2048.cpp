@@ -639,16 +639,27 @@ int2048 GetInv(const int2048 &B, int n) {
   remain.val[2 * n / int2048::kNum] = kPow10[2 * n % int2048::kNum];
   remain.num_length = (2 * n) + 1;
   UnsignedMultiply(sub_soluton_copy_1, &current_B);
-  UnsignedMinus(remain, &sub_soluton_copy_1);
-  for (int i = 64; i > 0; i >>= 1) {
-    int2048 tmp_B(current_B);
-    tmp_B.UnsignedMultiplyByInt(i);
-    if (UnsignedCmp(remain, tmp_B) >= 0) {
-      res += i;
-      UnsignedMinus(remain, &tmp_B);
+  int cmp = UnsignedCmp(remain, sub_soluton_copy_1);
+  if (cmp == 0) return std::move(res);
+  if (cmp > 0) {
+    UnsignedMinus(remain, &sub_soluton_copy_1);
+    for (int i = 64; i > 0; i >>= 1) {
+      int2048 tmp_B(current_B);
+      tmp_B.UnsignedMultiplyByInt(i);
+      if (UnsignedCmp(remain, tmp_B) >= 0) {
+        res += i;
+        UnsignedMinus(remain, &tmp_B);
+      }
+    }
+    return std::move(res);
+  } else {
+    UnsignedMinus(sub_soluton_copy_1, &remain);
+    for (int i = 64; i > 0; i >>= 1) {
+      int2048 tmp_B(current_B);
+      tmp_B.UnsignedMultiplyByInt(i);
+      res -= i;
     }
   }
-  return std::move(res);
 }
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   int2048 B(*pB);

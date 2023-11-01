@@ -36,9 +36,9 @@ opt_python=[]
 
 if True:
   for i in range(0,10):
-    val=randint(-10**100,10**100)
+    val=randint(-10**999,10**999)
     if i==0:
-      val=randint(-10**100,10**100)
+      val=randint(-10**999,10**999)
     opt_cpp.append("a_"+str(i)+"=int2048(\""+str(val)+"\");")
     opt_python.append("a_"+str(i)+"="+str(val))
     opt_cpp.append("a_"+str(i)+".print(); puts(\"\");")
