@@ -48,7 +48,8 @@ root= 6
 
   __int128_t QuickPow(__int128_t v, long long q);
   void NTTTransform(__int128_t *, int, bool);
-  
+  friend int2048 GetInv(const int2048 &,int);
+
  public:
   int2048();
   int2048(long long);
@@ -114,7 +115,6 @@ root= 6
   friend bool operator<=(const int2048 &, const int2048 &);
   friend bool operator>=(const int2048 &, const int2048 &);
 };
-int2048 GetInv(const int2048 &,int);
 }  // namespace sjtu
 
 #endif
