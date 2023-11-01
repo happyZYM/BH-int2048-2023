@@ -23,6 +23,7 @@
  */
 #include "int2048.h"
 
+#include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -182,8 +183,8 @@ inline void UnsignedAdd(int2048 &A, const int2048 *const pB) {
        i++) {
     if (i < (pB->num_length + int2048::kNum - 1) / int2048::kNum)
       A.val[i] += pB->val[i];
-    if (i + 1 < A.buf_length) A.val[i + 1] += A.val[i] / int2048::kMod;
-    A.val[i] %= int2048::kMod;
+    if (i + 1 < A.buf_length) A.val[i + 1] += A.val[i] / int2048::kStoreBase;
+    A.val[i] %= int2048::kStoreBase;
   }
   A.num_length = std::max(A.num_length, pB->num_length);
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
@@ -243,7 +244,7 @@ inline void UnsignedMinus(int2048 &A, const int2048 *const pB) {
        i++) {
     A.val[i] -= pB->val[i];
     if (A.val[i] < 0) {
-      A.val[i] += int2048::kMod;
+      A.val[i] += int2048::kStoreBase;
       A.val[i + 1]--;
     }
   }
@@ -362,6 +363,68 @@ __int128_t int2048::QuickPow(__int128_t v, long long q) {
   }
   return ret;
 }
+
+/**
+ * @brief Move the number to the left by L digits. That is, v'=v*(10^L)
+ */
+void int2048::LeftMoveBy(int L) {
+  const static long long kPow10[9] = {1,       10,       100,
+                                      1000,    10000,    100000,
+                                      1000000, 10000000, 100000000};
+  int big_move = L / int2048::kNum;
+  int small_move = L % int2048::kNum;
+  this->ClaimMem(this->num_length + L);
+  for (int i = this->buf_length - 1; i >= big_move; i--) {
+    this->val[i] = this->val[i - big_move];
+  }
+  for (int i = 0; i < big_move; i++) {
+    this->val[i] = 0;
+  }
+  this->num_length += big_move * int2048::kNum;
+  if (small_move == 0) return;
+  for (int i = this->buf_length - 1; i >= 0; i--) {
+    (this->val[i] *= kPow10[small_move]) %= int2048::kStoreBase;
+    if (i - 1 >= 0) {
+      this->val[i] +=
+          this->val[i - 1] / kPow10[int2048::kNum - small_move];
+    }
+  }
+  this->val[big_move] =
+      (this->val[big_move] / kPow10[small_move]) * kPow10[small_move];
+  this->num_length += small_move;
+}
+
+/**
+ * @brief Move the number to the right by L digits. That is, v'=v//(10^L)
+ */
+void int2048::RightMoveBy(int L) {
+  if (L >= this->num_length) {
+    this->num_length = 1;
+    this->val[0] = 0;
+    return;
+  }
+  int big_move = L / int2048::kNum;
+  int small_move = L % int2048::kNum;
+  for (int i = 0; i < this->buf_length - big_move; i++) {
+    this->val[i] = this->val[i + big_move];
+  }
+  for (int i = this->buf_length - big_move; i < this->buf_length; i++) {
+    this->val[i] = 0;
+  }
+  this->num_length -= big_move * int2048::kNum;
+  if (small_move == 0) return;
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  for (int i = 0; i < this->buf_length; i++) {
+    this->val[i] /= kPow10[small_move];
+    if (i + 1 < this->buf_length) {
+      this->val[i] += this->val[i + 1] % kPow10[small_move] *
+                      kPow10[int2048::kNum - small_move];
+    }
+  }
+  this->num_length -= small_move;
+}
+
 void int2048::NTTTransform(__int128_t *a, int NTT_blocks,
                            bool inverse = false) {
   for (int i = 1, j = 0; i < NTT_blocks; i++) {
@@ -475,128 +538,39 @@ int2048 operator*(int2048 A, const int2048 &B) {
   return std::move(A);
 }
 
-void int2048::RightMoveBy(int L) {
-  if (L >= this->num_length) {
-    this->num_length = 1;
-    this->val[0] = 0;
-    return;
-  }
-  int big_move = L / int2048::kNum;
-  int small_move = L % int2048::kNum;
-  for (int i = 0; i < this->buf_length - big_move; i++) {
-    this->val[i] = this->val[i + big_move];
-  }
-  for (int i = this->buf_length - big_move; i < this->buf_length; i++) {
-    this->val[i] = 0;
-  }
-  this->num_length -= big_move * int2048::kNum;
-  if (small_move == 0) return;
-  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
-                                100000, 1000000, 10000000, 100000000};
-  for (int i = 0; i < this->buf_length; i++) {
-    this->val[i] /= kPow10[small_move];
-    if (i + 1 < this->buf_length) {
-      this->val[i] += this->val[i + 1] % kPow10[small_move] *
-                      kPow10[int2048::kNum - small_move];
-    }
-  }
-  this->num_length -= small_move;
-}
-
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
-  int L1 = A.num_length, L2 = pB->num_length;
-  if (&A == pB) throw "UnsignedDivide: A and B are the same object";
-  if (2 * L1 - L2 - 1 < 0) {
-    A = std::move(int2048(0));
-    return;
+  int2048 B(*pB);
+  int L1 = A.num_length, L2 = B.num_length;
+  /**
+   * reference:
+   * https://github.com/lzyrapx/Competitive-Programming-Docs/blob/master/WC%E8%AE%B2%E8%AF%BE%E8%B5%84%E6%96%99/%E7%90%86%E6%80%A7%E6%84%89%E6%82%A6%E2%80%94%E2%80%94%E9%AB%98%E7%B2%BE%E5%BA%A6%E6%95%B0%E5%80%BC%E8%AE%A1%E7%AE%97%EF%BC%882012WC%EF%BC%89.pdf
+   *
+   * the algorithm is as follows:
+   * 1. if L2<=2, special process
+   * 2. Left move A and B, making 2*L2>=L1
+   * 3. calculate [10^(2*n)/B]
+   *    1. define C_k=[10^(2k)/B_k] (B_k is the first k numbers of B)
+   *    2. then C_2k=2*C_k*10^k-[A*C_k^2/10^2k]
+   *    3. get accurate [10^(2*n)/B] by iteration
+   * 4. calculate [10^(2*n)/B]*A and ajust
+   */
+  if (L2 <= 2) {
+    ;
   }
-  if (UnsignedCmp(A, *pB) < 0) {
-    A = std::move(int2048(0));
-    return;
+  if (2 * L2 < L1) {
+    int delta = L1 - 2 * L2;
+    A.LeftMoveBy(delta);
+    L1 += delta;
+    B.LeftMoveBy(delta);
+    L2 += delta;
   }
-  int2048 x;
-  /*init x as 10^(L1-L2)*/
-  x.ClaimMem(L1 - L2 + 1);
-  x.num_length = L1 - L2 + 1;
-  memset(x.val, 0, x.buf_length * sizeof(int));
-  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
-                                100000, 1000000, 10000000, 100000000};
-  x.val[(x.num_length - 1) / int2048::kNum] =
-      kPow10[(x.num_length - 1) % int2048::kNum];
-  /*reset x.num_length*/
-  while (x.val[(x.num_length - 1) / int2048::kNum] /
-             kPow10[(x.num_length - 1) % int2048::kNum] ==
-         0) {
-    x.num_length--;
-    if (x.num_length == 0) throw "UnsignedMultiply: num_length==0";
-  }
-  /*check the highest number of B*/
-  if (pB->val[(pB->num_length - 1) / int2048::kNum] /
-          kPow10[(pB->num_length - 1) % int2048::kNum] ==
-      1) {
-    /* x=5*x */
-    int2048 tmp(x);
-    tmp.add(tmp);
-    tmp.add(tmp);
-    x.add(tmp);
-  } else if (pB->val[(pB->num_length - 1) / int2048::kNum] /
-                 kPow10[(pB->num_length - 1) % int2048::kNum] <
-             3) {
-    /* x=3*x */
-    int2048 tmp(x);
-    tmp.add(tmp);
-    x.add(tmp);
-  } else if (pB->val[(pB->num_length - 1) / int2048::kNum] /
-                 kPow10[(pB->num_length - 1) % int2048::kNum] <
-             5) {
-    /* x=2*x */
-    x.add(x);
-  }
-  int2048 x_pre(x);
-  int2048 kOne(1);
-  UnsignedMinus(x_pre, &kOne);
-  // int cnt = 0;
-  while (true) {
-    /**
-     * x_{n+1}=2*x_n-x_n*x_n*B/(10^L1))
-     */
-    int2048 tmp = *pB;
-    UnsignedMultiply(tmp, &x);
-    UnsignedMultiply(tmp, &x);
-    // std::cerr << "max length ratio during computing"
-              // << (double)tmp.num_length / (double)L1 << std::endl;
-    tmp.RightMoveBy(L1);
-    int2048 x_next = x;
-    UnsignedAdd(x_next, &x);
-    UnsignedMinus(x_next, &tmp);
-    if (UnsignedCmp(x_next, x) == 0) break;
-    if (UnsignedCmp(x_next, x_pre) == 0) break;
-    x_pre = std::move(x);
-    x = std::move(x_next);
-    // std::cerr << "length ratio of x after each step"
-              // << (double)x.num_length / (double)L1 << std::endl;
-    // cnt++;
-  }
-  /*ret=A*x/10^(L1)*/
-  UnsignedMultiply(x, &A);
-  x.RightMoveBy(L1);
-  /*remain=A -B*ret*/
-  int2048 tmp = *pB;
-  UnsignedMultiply(tmp, &x);
-  if (UnsignedCmp(A, tmp) < 0) {
-    x -= 1;
-    tmp = *pB;
-    UnsignedMultiply(tmp, &x);
-  }
-  UnsignedMinus(A, &tmp);
-  int2048 remain = std::move(A);
-  while (UnsignedCmp(remain, *pB) >= 0) {
-    UnsignedMinus(remain, pB);
-    UnsignedAdd(x, &kOne);
-    // cnt++;
-  }
-  // std::cerr << cnt << std::endl;
-  A = std::move(x);
+  assert(L1 == A.num_length);
+  assert(L2 == B.num_length);
+  assert(2 * L2 >= L1);
+  int2048 tmp(A);
+  tmp.LeftMoveBy(233);
+  tmp.RightMoveBy(233);
+  assert(tmp == A);
 }
 int2048 &int2048::Divide(const int2048 &B) {
   if (this == &B) {
