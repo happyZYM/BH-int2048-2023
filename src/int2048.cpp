@@ -398,7 +398,8 @@ void int2048::LeftMoveBy(int L) {
   this->num_length += big_move * int2048::kNum;
   if (small_move == 0) return;
   for (int i = this->buf_length - 1; i >= 0; i--) {
-    (this->val[i] *= kPow10[small_move]) %= int2048::kStoreBase;
+    this->val[i] =
+        ((long long)this->val[i] * kPow10[small_move]) % int2048::kStoreBase;
     if (i - 1 >= 0) {
       this->val[i] += this->val[i - 1] / kPow10[int2048::kNum - small_move];
     }
