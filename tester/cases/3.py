@@ -36,7 +36,9 @@ opt_python=[]
 
 if True:
   for i in range(0,10):
-    val=randint(-10**100,10**100)
+    val=randint(-10**15,10**15)
+    if i==0:
+      val=randint(-10**100,10**100)
     opt_cpp.append("a_"+str(i)+"=int2048(\""+str(val)+"\");")
     opt_python.append("a_"+str(i)+"="+str(val))
     opt_cpp.append("a_"+str(i)+".print(); puts(\"\");")
@@ -45,8 +47,8 @@ if True:
 if True:
   for i in range(1):
     aid=randint(0,9)
-    bid=randint(0,9)
-    cid=randint(0,9)
+    bid=randint(0,0)
+    cid=randint(1,9)
     op='/'
     bflag="+"
     if randint(0,1)==0:
@@ -80,7 +82,7 @@ for opt in opt_cpp:
   print(opt,file=sourc_cpp)
 print(code_cpp_suf,file=sourc_cpp)
 sourc_cpp.close()
-system("g++ /tmp/3.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -g -o /tmp/3")
+system("g++ /tmp/3.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -g -fsanitize=address -o /tmp/3")
 system("/tmp/3 > /tmp/3_cpp.out")
 
 sourc_python=open("/tmp/3.py","w")
