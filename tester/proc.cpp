@@ -2,11 +2,9 @@
 int main()
 {
   using namespace sjtu;
-  int2048 a("123456789");
+  int2048 a("1234567871928347194791784918734981");
   a.print(); puts("");
-  a.LeftMoveBy(17);
-  a.print(); puts("");
-  a.RightMoveBy(17);
+  a.UnsignedMultiplyByInt(2147483647);
   a.print(); puts("");
   return 0;
 }

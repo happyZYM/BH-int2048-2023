@@ -536,7 +536,33 @@ int2048 operator*(int2048 A, const int2048 &B) {
   A.Multiply(B);
   return std::move(A);
 }
+void int2048::UnsignedMultiplyByInt(int v) {
+  if (v < 0) throw "UnsignedMultiplyByInt: v < 0";
+  if (v == 0) {
+    *this = std::move(int2048(0));
+    return;
+  }
+  if (v == 1) return;
+  int blocks = (this->num_length + int2048::kNum - 1) / int2048::kNum;
+  this->ClaimMem(this->num_length + int2048::kNum * 2);
+  blocks += 2;
+  long long c = 0;
+  for (int i = 0; i < blocks; i++) {
+    long long tmp = (long long)this->val[i] * v + c;
+    c = tmp / int2048::kStoreBase;
+    this->val[i] = tmp % int2048::kStoreBase;
+  }
+  this->num_length = blocks * int2048::kNum;
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  while (this->num_length > 1 &&
+         this->val[(this->num_length - 1) / int2048::kNum] /
+                 kPow10[(this->num_length - 1) % int2048::kNum] ==
+             0)
+    this->num_length--;
+}
 
+int2048 GetInv(const int2048 &, int) { ; }
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   int2048 B(*pB);
   int L1 = (A.num_length + int2048::kNum - 1) / int2048::kNum;
@@ -545,15 +571,6 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   /**
    * reference:
    * https://github.com/lzyrapx/Competitive-Programming-Docs/blob/master/WC%E8%AE%B2%E8%AF%BE%E8%B5%84%E6%96%99/%E7%90%86%E6%80%A7%E6%84%89%E6%82%A6%E2%80%94%E2%80%94%E9%AB%98%E7%B2%BE%E5%BA%A6%E6%95%B0%E5%80%BC%E8%AE%A1%E7%AE%97%EF%BC%882012WC%EF%BC%89.pdf
-   *
-   * the algorithm is as follows:
-   * 1. if L2<=2, special process
-   * 2. Left move A and B, making 2*L2>=L1
-   * 3. calculate [10^(2*n)/B]
-   *    1. define C_k=[10^(2k)/B_k] (B_k is the first k numbers of B)
-   *    2. then C_2k=2*C_k*10^k-[A*C_k^2/10^2k]
-   *    3. get accurate [10^(2*n)/B] by iteration
-   * 4. calculate [10^(2*n)/B]*A and ajust
    */
   if (L2 <= 2) {
     long long b = B.val[0] + (long long)B.val[1] * int2048::kStoreBase;
@@ -573,6 +590,10 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
       A.num_length--;
     return;
   }
+  if (UnsignedCmp(A, *pB) < 0) {
+    A = std::move(int2048(0));
+    return;
+  }
   if (2 * L2 < L1) {
     int delta = L1 - 2 * L2;
     A.LeftMoveBy(delta * int2048::kNum);
@@ -583,10 +604,15 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   assert(L1 == (A.num_length + int2048::kNum - 1) / int2048::kNum);
   assert(L2 == (B.num_length + int2048::kNum - 1) / int2048::kNum);
   assert(2 * L2 >= L1);
-  int k = 2;
-  do {
-    /* code */
-  } while (k * 2 <= L2);
+  int2048 res_hat = std::move(GetInv(B, L2));
+  UnsignedMultiply(res_hat, &A);
+  res_hat.RightMoveBy(2 * L2 * int2048::kNum);
+  int2048 remain(A), tmp_B(B);
+  UnsignedMultiply(tmp_B, &res_hat);
+  UnsignedMinus(remain, &tmp_B);
+  for (int i = 8; i > 0; i >>= 1) {
+    tmp_B = B;
+  }
 }
 int2048 &int2048::Divide(const int2048 &B) {
   if (this == &B) {
