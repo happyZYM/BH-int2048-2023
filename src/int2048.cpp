@@ -657,8 +657,14 @@ int2048 GetInv(const int2048 &B, int n) {
     for (int i = 64; i > 0; i >>= 1) {
       int2048 tmp_B(current_B);
       tmp_B.UnsignedMultiplyByInt(i);
-      res -= i;
+      if (UnsignedCmp(sub_soluton_copy_1, tmp_B) >= 0) {
+        res -= i;
+        UnsignedMinus(sub_soluton_copy_1, &tmp_B);
+      }
     }
+    int2048 tmp_zero(0);
+    if (UnsignedCmp(sub_soluton_copy_1, tmp_zero) != 0) res -= 1;
+    return std::move(res);
   }
 }
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
