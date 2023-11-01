@@ -36,20 +36,21 @@ opt_python=[]
 
 if True:
   for i in range(0,10):
-    val=randint(-10**999,10**999)
-    if i==0:
-      val=randint(-10**999,10**999)
+    val=randint(-10**18,10**18)
+    if randint(0,1)==0:
+      val=randint(-10**2,10**2)
     opt_cpp.append("a_"+str(i)+"=int2048(\""+str(val)+"\");")
     opt_python.append("a_"+str(i)+"="+str(val))
     opt_cpp.append("a_"+str(i)+".print(); puts(\"\");")
     opt_python.append("print(a_"+str(i)+")")
 
 if True:
-  for i in range(1):
+  for i in range(10):
     aid=randint(0,9)
-    bid=randint(0,0)
-    cid=randint(1,9)
-    op='/'
+    bid=randint(0,9)
+    cid=randint(0,9)
+    oplist=['+','-','*','/']
+    op=oplist[randint(0,3)]
     bflag="+"
     if randint(0,1)==0:
       bflag="-"
@@ -57,7 +58,13 @@ if True:
     if randint(0,1)==0:
       cflag="-"
     opt_cpp.append("a_"+str(aid)+"=("+bflag+"a_"+str(bid)+")"+op+"("+cflag+"a_"+str(cid)+");")
-    opt_python.append("a_"+str(aid)+"=("+bflag+"a_"+str(bid)+")"+op+op+"("+cflag+"a_"+str(cid)+")")
+    if op=='/':
+      opt_python.append("try:")
+      opt_python.append("  a_"+str(aid)+"=("+bflag+"a_"+str(bid)+")"+op+op+"("+cflag+"a_"+str(cid)+")")
+      opt_python.append("except ZeroDivisionError:")
+      opt_python.append("  a_"+str(aid)+"=0")
+    else:
+      opt_python.append("a_"+str(aid)+"=("+bflag+"a_"+str(bid)+")"+op+"("+cflag+"a_"+str(cid)+")")
     opt_cpp.append("a_"+str(aid)+".print(); puts(\"\");")
     opt_python.append("print(a_"+str(aid)+")")
     opt_cpp.append("a_"+str(bid)+".print(); puts(\"\");")
@@ -65,13 +72,20 @@ if True:
     opt_cpp.append("a_"+str(cid)+".print(); puts(\"\");")
     opt_python.append("print(a_"+str(cid)+")")
 
-if False:
+if True:
   for i in range(10):
     aid=randint(0,9)
     bid=randint(0,9)
-    op='/='
-    opt_cpp.append("a_"+str(aid)+op+"a_"+str(bid)+";")
-    opt_python.append("a_"+str(aid)+op+"a_"+str(bid))
+    oplist=['+','-','*','/']
+    op=oplist[randint(0,3)]
+    opt_cpp.append("a_"+str(aid)+op+"=a_"+str(bid)+";")
+    if op=='/':
+      opt_python.append("try:")
+      opt_python.append("  a_"+str(aid)+op+op+"=a_"+str(bid))
+      opt_python.append("except ZeroDivisionError:")
+      opt_python.append("  a_"+str(aid)+"=0")
+    else:
+      opt_python.append("a_"+str(aid)+op+"=a_"+str(bid))
     opt_cpp.append("a_"+str(aid)+".print(); puts(\"\");")
     opt_python.append("print(a_"+str(aid)+")")
 

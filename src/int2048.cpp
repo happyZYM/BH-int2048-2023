@@ -726,14 +726,14 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   A = std::move(res_hat);
 }
 int2048 &int2048::Divide(const int2048 &B) {
-  if (this == &B) {
-    *this = std::move(int2048(1));
-    return *this;
-  }
   if (B.num_length == 1 && B.val[0] == 0) {
     *this = std::move(int2048(0));
     return *this;
     // throw "Divide: divide by zero";
+  }
+  if (this == &B) {
+    *this = std::move(int2048(1));
+    return *this;
   }
   int2048 origin_A(*this);
   int flag_store = this->flag * B.flag;
