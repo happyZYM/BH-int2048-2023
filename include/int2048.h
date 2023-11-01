@@ -14,6 +14,7 @@ class int2048 {
    * If the interger is negative, flag = -1, otherwise flag = 1.
    * num_length is the length of the integer, (num_length+kNum-1)/kNum is the
    * length of val with data. Note that position in val without data is 0.
+   * buf_length is the accessiable length of val.
    */
   const static int kStoreBase = 100000000, kNum = 8, kDefaultLength = 10;
   const static int kMemAdditionScalar = 2, kMemDeleteScalar = 4;
@@ -59,15 +60,27 @@ root= 6
   int2048(int2048 &&) noexcept;
   ~int2048();
 
+  /**
+   * @brief Move the integer left (*10^k) or right(//10^k).
+   */
   void LeftMoveBy(int);
   void RightMoveBy(int);
 
   void read(const std::string &);
   void print();
   void print_debug();
+  // function print_debug is used to print the data in val to stderr(with '\n'),
+  // for debug
 
   void ClaimMem(size_t);
+  // something like vector's reserve
 
+  /**
+   * Fuctions whose name starts with Unsigned are basic operation. It receives
+   * int2048& A and const int2048* pB(UnsignedCmp receives const int2048& B),
+   * and do the operation A op= *pB. Warning: the address of A and pB must be
+   * different.
+   */
   inline friend int UnsignedCmp(const int2048 &, const int2048 &);
   inline friend void UnsignedAdd(int2048 &, const int2048 *);
   inline friend void UnsignedMinus(int2048 &, const int2048 *);
@@ -100,6 +113,11 @@ root= 6
   int2048 &Divide(const int2048 &);
   friend int2048 Divide(int2048, const int2048 &);
 
+  /**
+   * If the denominator is zero, the result is undefined.
+   * But actually it will return 0 with no exception thrown.
+   * And % operation is also based on this rule.
+   */
   int2048 &operator/=(const int2048 &);
   friend int2048 operator/(int2048, const int2048 &);
 

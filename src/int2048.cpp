@@ -100,6 +100,13 @@ int2048::int2048(const int2048 &input_value) {
   num_length = input_value.num_length;
 }
 
+/**
+ * @brief Move constructor
+ *
+ * @param input_value
+ *
+ * @details Note that after moving, the input_value will be set to 0.
+ */
 int2048::int2048(int2048 &&input_value) noexcept {
   buf_length = input_value.buf_length;
   val = input_value.val;
@@ -164,6 +171,15 @@ void int2048::print_debug() {
   delete[] buf;
 }
 
+/**
+ * @brief Claim memory for the number
+ *
+ * @param number_length The length of the number
+ *
+ * @details If the number_length is smaller than the current buf_length/4 or
+ * bigger than current buf_length, then val will be reset to accomodate
+ * number_length*2 numbers. Something like std::vector.
+ */
 void int2048::ClaimMem(size_t number_length) {
   size_t new_number_blocks = (number_length + kNum - 1) / kNum;
   if (new_number_blocks > buf_length) {
@@ -181,6 +197,17 @@ void int2048::ClaimMem(size_t number_length) {
   }
 }
 
+/**
+ * @brief Compare two unsigned numbers
+ *
+ * @param A The first number
+ * @param B The second number
+ *
+ * @return -1 if A < B, 0 if A == B, 1 if A > B
+ *
+ * @details This function is used to compare two numbers wittout considering the
+ * sign.
+ */
 inline int UnsignedCmp(const int2048 &A, const int2048 &B) {
   if (A.num_length != B.num_length) return A.num_length < B.num_length ? -1 : 1;
   int number_of_blocks = (A.num_length + int2048::kNum - 1) / int2048::kNum;
@@ -440,6 +467,16 @@ void int2048::RightMoveBy(int L) {
   this->num_length -= small_move;
 }
 
+/**
+ * @brief the definition of NTTTransform
+ *
+ * @param a the array to be transformed
+ * @param NTT_blocks the length of the array
+ * @param inverse whether to do inverse transform
+ *
+ * @details the array a will be transformed to a new array a', which is the NTT.
+ * Note that the base in NTT is 10000.
+ */
 void int2048::NTTTransform(__int128_t *a, int NTT_blocks,
                            bool inverse = false) {
   for (int i = 1, j = 0; i < NTT_blocks; i++) {
@@ -469,6 +506,16 @@ void int2048::NTTTransform(__int128_t *a, int NTT_blocks,
     for (int i = 0; i < NTT_blocks; i++) (a[i] *= inv) %= int2048::kNTTMod;
   }
 }
+
+/**
+ * @brief Unsigned multiply two numbers
+ *
+ * @param A The first number
+ * @param pB The second number
+ *
+ * @details This function will multiply two numbers without considering the
+ * sign.
+ */
 inline void UnsignedMultiply(int2048 &A, const int2048 *pB) {
   if (&A == pB) throw "UnsignedMultiply: A and B are the same object";
   int blocks_of_A = ((A.num_length + int2048::kNum - 1) / int2048::kNum);
@@ -552,6 +599,15 @@ int2048 operator*(int2048 A, const int2048 &B) {
   A.Multiply(B);
   return std::move(A);
 }
+
+/**
+ * @brief Unsigned multiply a number by an integer
+ *
+ * @param v The integer
+ *
+ * @details This function will multiply a number by an integer without
+ * considering the sign.
+ */
 void int2048::UnsignedMultiplyByInt(int v) {
   if (v < 0) throw "UnsignedMultiplyByInt: v < 0";
   if (v == 0) {
@@ -586,6 +642,9 @@ int2048 GetInv(const int2048 &B, int n) {
                                 100000, 1000000, 10000000, 100000000};
   int total_blocks = (B.num_length + int2048::kNum - 1) / int2048::kNum;
   if (n <= 16) {
+    /**
+     * This code block is used to calculate the inverse of B when n is small.
+     */
     long long b = 0;
     for (int j = B.num_length - 1, i = 0; i < n; i++, j--)
       b = b * 10 + (B.val[j / int2048::kNum] / kPow10[j % int2048::kNum]) % 10;
@@ -614,6 +673,7 @@ int2048 GetInv(const int2048 &B, int n) {
   int2048 sub_soluton_copy_2(sub_soluton);
   sub_soluton_copy_1.UnsignedMultiplyByInt(2);
   sub_soluton_copy_1.LeftMoveBy((n - k));
+  // Now sub_soluton_copy_1 is 2*sub_soluton*10^(n-k)
   /*now we get the current B*/
   int2048 current_B;
   current_B.ClaimMem(n);
@@ -632,8 +692,11 @@ int2048 GetInv(const int2048 &B, int n) {
   UnsignedMultiply(sub_soluton_copy_2, &current_B);
   UnsignedMultiply(sub_soluton_copy_2, &sub_soluton);
   sub_soluton_copy_2.RightMoveBy(2 * k);
+  // Now sub_soluton_copy_2 is sub_soluton^2*current_B/(10^2k)
   UnsignedMinus(sub_soluton_copy_1, &sub_soluton_copy_2);
   int2048 res = sub_soluton_copy_1;
+  // Now we get an estimation for [10^2n/current_B]
+  /*Now begin doing some ajustments*/
   int2048 remain;
   remain.ClaimMem((2 * n) + 1);
   remain.val[2 * n / int2048::kNum] = kPow10[2 * n % int2048::kNum];
@@ -667,14 +730,21 @@ int2048 GetInv(const int2048 &B, int n) {
     return std::move(res);
   }
 }
+
+/**
+ * @brief Unsigned divide two numbers
+ *
+ * @param A The first number
+ * @param pB The second number
+ *
+ * @details This function will divide two numbers without considering the sign.
+ * reference:
+ * <https://github.com/lzyrapx/Competitive-Programming-Docs/blob/master/WC%E8%AE%B2%E8%AF%BE%E8%B5%84%E6%96%99/%E7%90%86%E6%80%A7%E6%84%89%E6%82%A6%E2%80%94%E2%80%94%E9%AB%98%E7%B2%BE%E5%BA%A6%E6%95%B0%E5%80%BC%E8%AE%A1%E7%AE%97%EF%BC%882012WC%EF%BC%89.pdf>
+ */
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   int2048 B(*pB);
   int L1 = A.num_length;
   int L2 = B.num_length;
-  /**
-   * reference:
-   * https://github.com/lzyrapx/Competitive-Programming-Docs/blob/master/WC%E8%AE%B2%E8%AF%BE%E8%B5%84%E6%96%99/%E7%90%86%E6%80%A7%E6%84%89%E6%82%A6%E2%80%94%E2%80%94%E9%AB%98%E7%B2%BE%E5%BA%A6%E6%95%B0%E5%80%BC%E8%AE%A1%E7%AE%97%EF%BC%882012WC%EF%BC%89.pdf
-   */
   if (L2 <= 16) {
     long long b = B.val[0] + (long long)B.val[1] * int2048::kStoreBase;
     __uint128_t c = 0;
@@ -709,12 +779,16 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   assert(L1 == A.num_length);
   assert(L2 == B.num_length);
   assert(2 * L2 >= L1);
+  /*Now we calculate [10^2n/B]*/
   int2048 res_hat = std::move(GetInv(B, L2));
   UnsignedMultiply(res_hat, &A);
   res_hat.RightMoveBy(2 * L2);
+  // now res_hat is [[10^2n/B]*A/(10^2L2)]
+  /*Now begin doing ajustments*/
   int2048 remain(A), tmp_B(B);
   UnsignedMultiply(tmp_B, &res_hat);
   UnsignedMinus(remain, &tmp_B);
+  // now remain is A-res_hat*B
   for (int i = 8; i > 0; i >>= 1) {
     tmp_B = B;
     tmp_B.UnsignedMultiplyByInt(i);
