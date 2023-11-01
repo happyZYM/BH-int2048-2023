@@ -48,7 +48,8 @@ root= 6
 
   __int128_t QuickPow(__int128_t v, long long q);
   void NTTTransform(__int128_t *, int, bool);
-  friend int2048 GetInv(const int2048 &,int);
+  friend int2048 GetInv(const int2048 &, int);
+  void UnsignedMultiplyByInt(int);
 
  public:
   int2048();
@@ -58,7 +59,6 @@ root= 6
   int2048(int2048 &&) noexcept;
   ~int2048();
 
-  void UnsignedMultiplyByInt(int);
   void LeftMoveBy(int);
   void RightMoveBy(int);
 
