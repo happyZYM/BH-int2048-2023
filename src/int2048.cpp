@@ -583,20 +583,21 @@ int2048 GetInv(const int2048 &B, int n) {
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                 100000, 1000000, 10000000, 100000000};
   int total_blocks = (B.num_length + int2048::kNum - 1) / int2048::kNum;
-  if (n <= 2) {
+  if (n <= 16) {
     long long b = B.val[total_blocks - 1] * (long long)int2048::kStoreBase +
                   B.val[total_blocks - 2];
     int2048 res;
-    res.ClaimMem((2 * n) * int2048::kNum + 1);
-    res.val[2 * n] = 1;
+    res.ClaimMem((2 * n) + 1);
+    res.val[2 * n / int2048::kNum] = kPow10[2 * n % int2048::kNum];
     __uint128_t c = 0;
-    for (int i = 2 * n; i >= 0; i--) {
+    int tmp_B = (((2 * n) + 1) - int2048::kNum - 1) / int2048::kNum;
+    for (int i = tmp_B - 1; i >= 0; i--) {
       c = c * int2048::kStoreBase + res.val[i];
       res.val[i] = c / b;
       c %= b;
       assert(res.val[i] < int2048::kStoreBase);
     }
-    res.num_length = (2 * n) * int2048::kNum + 1;
+    res.num_length = (2 * n) + 1;
     while (res.num_length > 1 &&
            res.val[(res.num_length - 1) / int2048::kNum] /
                    kPow10[(res.num_length - 1) % int2048::kNum] ==
@@ -609,21 +610,22 @@ int2048 GetInv(const int2048 &B, int n) {
   int2048 sub_soluton_copy_1(sub_soluton);
   int2048 sub_soluton_copy_2(sub_soluton);
   sub_soluton_copy_1.UnsignedMultiplyByInt(2);
-  sub_soluton_copy_1.LeftMoveBy((n - k) * int2048::kNum);
-  int2048 current_B;  // current_B is the highest n blocks of B
-  current_B.ClaimMem(n * int2048::kNum);
-  for (int i = n - 1; i >= 0; i--)
-    current_B.val[i] = B.val[i + total_blocks - n];
-  current_B.num_length = B.num_length - int2048::kNum * (total_blocks - n);
+  sub_soluton_copy_1.LeftMoveBy((n - k));
+  int2048 current_B;  // current_B is the highest n numbers of B
+  current_B.ClaimMem(n);
+  int current_B_blocks = (n + int2048::kNum - 1) / int2048::kNum;
+  for (int i = current_B_blocks - 1; i >= 0; i--)
+    current_B.val[i] = B.val[i + total_blocks - current_B_blocks];
+  current_B.num_length = B.num_length - (total_blocks - current_B_blocks);
   UnsignedMultiply(sub_soluton_copy_2, &current_B);
   UnsignedMultiply(sub_soluton_copy_2, &sub_soluton);
-  sub_soluton_copy_2.RightMoveBy(2 * k * int2048::kNum);
+  sub_soluton_copy_2.RightMoveBy(2 * k);
   UnsignedMinus(sub_soluton_copy_1, &sub_soluton_copy_2);
   int2048 res = sub_soluton_copy_1;
   int2048 remain;
-  remain.ClaimMem((2 * n) * int2048::kNum + 1);
-  remain.val[2 * n] = 1;
-  remain.num_length = (2 * n) * int2048::kNum + 1;
+  remain.ClaimMem((2 * n) + 1);
+  remain.val[2 * n / int2048::kNum] = kPow10[2 * n % int2048::kNum];
+  remain.num_length = (2 * n) + 1;
   UnsignedMultiply(sub_soluton_copy_1, &current_B);
   UnsignedMinus(remain, &sub_soluton_copy_1);
   for (int i = 64; i > 0; i >>= 1) {
@@ -638,23 +640,23 @@ int2048 GetInv(const int2048 &B, int n) {
 }
 inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   int2048 B(*pB);
-  int L1 = (A.num_length + int2048::kNum - 1) / int2048::kNum;
-  int L2 = (B.num_length + int2048::kNum - 1) / int2048::kNum;
-  // L1 and L2 are number of blocks
+  int L1 = A.num_length;
+  int L2 = B.num_length;
   /**
    * reference:
    * https://github.com/lzyrapx/Competitive-Programming-Docs/blob/master/WC%E8%AE%B2%E8%AF%BE%E8%B5%84%E6%96%99/%E7%90%86%E6%80%A7%E6%84%89%E6%82%A6%E2%80%94%E2%80%94%E9%AB%98%E7%B2%BE%E5%BA%A6%E6%95%B0%E5%80%BC%E8%AE%A1%E7%AE%97%EF%BC%882012WC%EF%BC%89.pdf
    */
-  if (L2 <= 2) {
+  if (L2 <= 16) {
     long long b = B.val[0] + (long long)B.val[1] * int2048::kStoreBase;
     __uint128_t c = 0;
-    for (int i = L1 - 1; i >= 0; i--) {
+    int blocks_of_A = (A.num_length + int2048::kNum - 1) / int2048::kNum;
+    for (int i = blocks_of_A - 1; i >= 0; i--) {
       c = c * int2048::kStoreBase + A.val[i];
       A.val[i] = c / b;
       c %= b;
       assert(A.val[i] < int2048::kStoreBase);
     }
-    A.num_length = L1 * int2048::kNum;
+    A.num_length = blocks_of_A * int2048::kNum;
     const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                   100000, 1000000, 10000000, 100000000};
     while (A.num_length > 1 &&
@@ -670,17 +672,17 @@ inline void UnsignedDivide(int2048 &A, const int2048 *pB) {
   }
   if (2 * L2 < L1) {
     int delta = L1 - 2 * L2;
-    A.LeftMoveBy(delta * int2048::kNum);
+    A.LeftMoveBy(delta);
     L1 += delta;
-    B.LeftMoveBy(delta * int2048::kNum);
+    B.LeftMoveBy(delta);
     L2 += delta;
   }
-  assert(L1 == (A.num_length + int2048::kNum - 1) / int2048::kNum);
-  assert(L2 == (B.num_length + int2048::kNum - 1) / int2048::kNum);
+  assert(L1 == A.num_length);
+  assert(L2 == B.num_length);
   assert(2 * L2 >= L1);
   int2048 res_hat = std::move(GetInv(B, L2));
   UnsignedMultiply(res_hat, &A);
-  res_hat.RightMoveBy(2 * L2 * int2048::kNum);
+  res_hat.RightMoveBy(2 * L2);
   int2048 remain(A), tmp_B(B);
   UnsignedMultiply(tmp_B, &res_hat);
   UnsignedMinus(remain, &tmp_B);
