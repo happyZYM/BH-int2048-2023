@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <utility>
 
 static_assert(sizeof(int) == 4, "sizeof(int) != 4");
@@ -577,20 +578,21 @@ void int2048::UnsignedMultiplyByInt(int v) {
 }
 
 /**
- * @brief Estimate the inverse of B, which is the result of [(base)^2n/B]
+ * @brief Estimate the inverse of B, which is the result of [10^2n/B]
  */
 int2048 GetInv(const int2048 &B, int n) {
   const static int kPow10[9] = {1,      10,      100,      1000,     10000,
                                 100000, 1000000, 10000000, 100000000};
   int total_blocks = (B.num_length + int2048::kNum - 1) / int2048::kNum;
   if (n <= 16) {
-    long long b = B.val[total_blocks - 1] * (long long)int2048::kStoreBase +
-                  B.val[total_blocks - 2];
+    long long b = 0;
+    for (int j = B.num_length - 1, i = 0; i < n; i++, j--)
+      b = b * 10 + (B.val[j / int2048::kNum] / kPow10[j % int2048::kNum]) % 10;
     int2048 res;
     res.ClaimMem((2 * n) + 1);
     res.val[2 * n / int2048::kNum] = kPow10[2 * n % int2048::kNum];
     __uint128_t c = 0;
-    int tmp_B = (((2 * n) + 1) - int2048::kNum - 1) / int2048::kNum;
+    int tmp_B = (((2 * n) + 1) + int2048::kNum - 1) / int2048::kNum;
     for (int i = tmp_B - 1; i >= 0; i--) {
       c = c * int2048::kStoreBase + res.val[i];
       res.val[i] = c / b;
@@ -611,12 +613,21 @@ int2048 GetInv(const int2048 &B, int n) {
   int2048 sub_soluton_copy_2(sub_soluton);
   sub_soluton_copy_1.UnsignedMultiplyByInt(2);
   sub_soluton_copy_1.LeftMoveBy((n - k));
-  int2048 current_B;  // current_B is the highest n numbers of B
+  /*now we get the current B*/
+  int2048 current_B;
   current_B.ClaimMem(n);
-  int current_B_blocks = (n + int2048::kNum - 1) / int2048::kNum;
-  for (int i = current_B_blocks - 1; i >= 0; i--)
-    current_B.val[i] = B.val[i + total_blocks - current_B_blocks];
-  current_B.num_length = B.num_length - (total_blocks - current_B_blocks);
+  for (int i = B.num_length - 1, j = n - 1; j >= 0; j--, i--)
+    current_B.val[j / int2048::kNum] +=
+        (B.val[i / int2048::kNum] / kPow10[i % int2048::kNum] % 10) *
+        kPow10[j % int2048::kNum];
+  // current_B is the highest n numbers of B
+  current_B.num_length = n;
+  // std::cerr << "n=" << n << " while B=";
+  // int2048 new_B = B;
+  // new_B.print_debug();
+  // std::cerr << "current_B: ";
+  // current_B.print_debug();
+
   UnsignedMultiply(sub_soluton_copy_2, &current_B);
   UnsignedMultiply(sub_soluton_copy_2, &sub_soluton);
   sub_soluton_copy_2.RightMoveBy(2 * k);
