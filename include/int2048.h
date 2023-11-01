@@ -64,6 +64,7 @@ root= 6
 
   void read(const std::string &);
   void print();
+  void print_debug();
 
   void ClaimMem(size_t);
 

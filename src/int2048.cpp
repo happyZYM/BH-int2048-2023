@@ -149,6 +149,20 @@ void int2048::print() {
   delete[] buf;
 }
 
+void int2048::print_debug() {
+  // 实现输出逻辑
+  char *buf = new char[num_length + 5];
+  char *p = buf;
+  if (flag == -1) *p++ = '-';
+  const static int kPow10[9] = {1,      10,      100,      1000,     10000,
+                                100000, 1000000, 10000000, 100000000};
+  for (int i = num_length - 1; i >= 0; i--)
+    *p++ = char('0' + val[i / int2048::kNum] / kPow10[i % int2048::kNum] % 10);
+  *p++ = 0;
+  std::cerr << buf << std::endl;
+  delete[] buf;
+}
+
 void int2048::ClaimMem(size_t number_length) {
   size_t new_number_blocks = (number_length + kNum - 1) / kNum;
   if (new_number_blocks > buf_length) {
@@ -595,11 +609,12 @@ int2048 GetInv(const int2048 &B, int n) {
   int2048 sub_soluton_copy_1(sub_soluton);
   int2048 sub_soluton_copy_2(sub_soluton);
   sub_soluton_copy_1.UnsignedMultiplyByInt(2);
-  sub_soluton_copy_1.RightMoveBy((n - k) * int2048::kNum);
+  sub_soluton_copy_1.LeftMoveBy((n - k) * int2048::kNum);
   int2048 current_B;  // current_B is the highest n blocks of B
   current_B.ClaimMem(n * int2048::kNum);
   for (int i = n - 1; i >= 0; i--)
     current_B.val[i] = B.val[i + total_blocks - n];
+  current_B.num_length = B.num_length - int2048::kNum * (total_blocks - n);
   UnsignedMultiply(sub_soluton_copy_2, &current_B);
   UnsignedMultiply(sub_soluton_copy_2, &sub_soluton);
   sub_soluton_copy_2.RightMoveBy(2 * k * int2048::kNum);
@@ -614,7 +629,7 @@ int2048 GetInv(const int2048 &B, int n) {
   for (int i = 64; i > 0; i >>= 1) {
     int2048 tmp_B(current_B);
     tmp_B.UnsignedMultiplyByInt(i);
-    if(UnsignedCmp(remain, tmp_B) >= 0) {
+    if (UnsignedCmp(remain, tmp_B) >= 0) {
       res += i;
       UnsignedMinus(remain, &tmp_B);
     }
