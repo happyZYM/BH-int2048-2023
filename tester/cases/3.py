@@ -36,9 +36,11 @@ opt_python=[]
 
 if True:
   for i in range(0,10):
-    val=randint(-10**18,10**18)
+    L=randint(2,2048)
+    val=randint(-10**L,10**L)
     if randint(0,1)==0:
-      val=randint(-10**2,10**2)
+      L=randint(2,2048)
+      val=randint(-10**L,10**L)
     opt_cpp.append("a_"+str(i)+"=int2048(\""+str(val)+"\");")
     opt_python.append("a_"+str(i)+"="+str(val))
     opt_cpp.append("a_"+str(i)+".print(); puts(\"\");")
