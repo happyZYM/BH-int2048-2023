@@ -53,12 +53,9 @@ if True:
     cid=randint(0,9)
     oplist=['+','-','*','/']
     op=oplist[randint(0,3)]
-    bflag="+"
-    if randint(0,1)==0:
-      bflag="-"
-    cflag="+"
-    if randint(0,1)==0:
-      cflag="-"
+    flaglist=['+','-','']
+    bflag=flaglist[randint(0,2)]
+    cflag=flaglist[randint(0,2)]
     opt_cpp.append("a_"+str(aid)+"=("+bflag+"a_"+str(bid)+")"+op+"("+cflag+"a_"+str(cid)+");")
     if op=='/':
       opt_python.append("try:")
@@ -80,14 +77,16 @@ if True:
     bid=randint(0,9)
     oplist=['+','-','*','/']
     op=oplist[randint(0,3)]
-    opt_cpp.append("a_"+str(aid)+op+"=a_"+str(bid)+";")
+    flaglist=['+','-','']
+    bflag=flaglist[randint(0,2)]
+    opt_cpp.append("a_"+str(aid)+op+"=("+bflag+"a_"+str(bid)+");")
     if op=='/':
       opt_python.append("try:")
-      opt_python.append("  a_"+str(aid)+op+op+"=a_"+str(bid))
+      opt_python.append("  a_"+str(aid)+op+op+"=("+bflag+"a_"+str(bid)+")")
       opt_python.append("except ZeroDivisionError:")
       opt_python.append("  a_"+str(aid)+"=0")
     else:
-      opt_python.append("a_"+str(aid)+op+"=a_"+str(bid))
+      opt_python.append("a_"+str(aid)+op+"=("+bflag+"a_"+str(bid)+")")
     opt_cpp.append("a_"+str(aid)+".print(); puts(\"\");")
     opt_python.append("print(a_"+str(aid)+")")
 
