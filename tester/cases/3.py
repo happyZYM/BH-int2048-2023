@@ -36,10 +36,10 @@ opt_python=[]
 
 if True:
   for i in range(0,10):
-    L=randint(2,2048)
+    L=randint(1,2048)
     val=randint(-10**L,10**L)
     if randint(0,1)==0:
-      L=randint(2,2048)
+      L=randint(1,2048)
       val=randint(-10**L,10**L)
     opt_cpp.append("a_"+str(i)+"=int2048(\""+str(val)+"\");")
     opt_python.append("a_"+str(i)+"="+str(val))
@@ -47,7 +47,7 @@ if True:
     opt_python.append("print(a_"+str(i)+")")
 
 if True:
-  for i in range(10):
+  for i in range(100):
     aid=randint(0,9)
     bid=randint(0,9)
     cid=randint(0,9)
@@ -72,7 +72,7 @@ if True:
     opt_python.append("print(a_"+str(cid)+")")
 
 if True:
-  for i in range(10):
+  for i in range(100):
     aid=randint(0,9)
     bid=randint(0,9)
     oplist=['+','-','*','/']
@@ -89,6 +89,18 @@ if True:
       opt_python.append("a_"+str(aid)+op+"=("+bflag+"a_"+str(bid)+")")
     opt_cpp.append("a_"+str(aid)+".print(); puts(\"\");")
     opt_python.append("print(a_"+str(aid)+")")
+
+if True:
+  for i in range(700):
+    aid=randint(0,9)
+    bid=randint(0,9)
+    oplist=['>', '<', '>=', '<=', '==', '!=']
+    op=oplist[randint(0,5)]
+    flaglist=['+','-','']
+    aflag=flaglist[randint(0,2)]
+    bflag=flaglist[randint(0,2)]
+    opt_cpp.append("std::cout<<((("+aflag+"a_"+str(aid)+")"+op+"("+bflag+"a_"+str(bid)+"))?\"True\":\"False\")<<std::endl;")
+    opt_python.append("print(\"True\" if (("+aflag+"a_"+str(aid)+")"+op+"("+bflag+"a_"+str(bid)+")) else \"False\")")
 
 sourc_cpp=open("/tmp/3.cpp","w")
 print(code_cpp_pre,file=sourc_cpp)
