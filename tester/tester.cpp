@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
       if (!continuous) {
         std::cerr << total_passed << "/" << total_cases << " cases passed"
                   << std::endl;
-        return 1;
+        return status;
       }
     }
     std::cerr << total_passed << "/" << total_cases << " cases passed"
