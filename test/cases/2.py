@@ -11,7 +11,7 @@ sys.set_int_max_str_digits(10000000)
 
 code_cpp_pre="""
 #include<iostream>
-#include "/home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/int2048.h"
+#include "int2048.h"
 using namespace std;
 using namespace sjtu;
 int main()
@@ -80,7 +80,7 @@ for opt in opt_cpp:
   print(opt,file=sourc_cpp)
 print(code_cpp_suf,file=sourc_cpp)
 sourc_cpp.close()
-system("g++ /tmp/2.cpp -I /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/include/ -L /home/happyzym/CSWorkSpace/Proc/BigHomework/BH-int2048-2023/build/src/ -lint2048 -g -o /tmp/2")
+system("g++ /tmp/2.cpp -I /workspaces/BH-int2048-2023/include -L /workspaces/BH-int2048-2023/build/linux/x86_64/release -lint2048 -g -o /tmp/2")
 system("/tmp/2 > /tmp/2_cpp.out")
 
 sourc_python=open("/tmp/2.py","w")
